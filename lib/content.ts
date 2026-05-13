@@ -21,125 +21,69 @@ export type PostWithContent = Post & {
 }
 
 export async function getAllPosts(): Promise<Post[]> {
-  const posts =
-    await reader.collections.posts.all()
+  const posts = await reader.collections.posts.all()
 
-  const postsWithMeta = posts.map((post) => {
-    // MDX já vem como string
-    const content =
-      typeof post.entry.content === 'string'
-        ? post.entry.content
-        : ''
+  const postsWithMeta = await Promise.all(
+    posts.map(async (post) => {
+      const content = await post.entry.content()
+      const stats = readingTime(content || '')
 
-    const stats = readingTime(content)
-
-    return {
-      slug: post.slug,
-
-      title: post.entry.title,
-
-      excerpt: post.entry.excerpt,
-
-      publishedAt:
-        post.entry.publishedAt,
-
-      updatedAt:
-        post.entry.updatedAt || null,
-
-      tags: post.entry.tags || [],
-
-      draft:
-        post.entry.draft || false,
-
-      coverImage:
-        post.entry.coverImage || null,
-
-      readingTime: stats.text.replace(
-        'min read',
-        'min'
-      ),
-    }
-  })
+      return {
+        slug: post.slug,
+        title: post.entry.title,
+        excerpt: post.entry.excerpt,
+        publishedAt: post.entry.publishedAt,
+        updatedAt: post.entry.updatedAt || null,
+        tags: post.entry.tags || [],
+        draft: post.entry.draft || false,
+        coverImage: post.entry.coverImage || null,
+        readingTime: stats.text.replace('min read', 'min'),
+      }
+    })
+  )
 
   return postsWithMeta
     .filter((post) => !post.draft)
     .sort((a, b) => {
-      if (
-        !a.publishedAt ||
-        !b.publishedAt
-      )
-        return 0
-
-      return (
-        new Date(b.publishedAt).getTime() -
-        new Date(a.publishedAt).getTime()
-      )
+      if (!a.publishedAt || !b.publishedAt) return 0
+      return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
     })
 }
 
-export async function getPostBySlug(
-  slug: string
-): Promise<PostWithContent | null> {
-  const post =
-    await reader.collections.posts.read(slug)
+export async function getPostBySlug(slug: string): Promise<PostWithContent | null> {
+  const post = await reader.collections.posts.read(slug)
 
   if (!post) return null
 
-  const content =
-    typeof post.content === 'string'
-      ? post.content
-      : ''
-
-  const stats = readingTime(content)
+  const content = await post.content()
+  const stats = readingTime(content || '')
 
   return {
     slug,
-
     title: post.title,
-
     excerpt: post.excerpt,
-
     publishedAt: post.publishedAt,
-
     updatedAt: post.updatedAt || null,
-
     tags: post.tags || [],
-
     draft: post.draft || false,
-
     coverImage: post.coverImage || null,
-
-    readingTime: stats.text.replace(
-      'min read',
-      'min'
-    ),
-
-    content,
+    readingTime: stats.text.replace('min read', 'min'),
+    content: content || '',
   }
 }
 
-export async function getAllTags(): Promise<
-  string[]
-> {
+export async function getAllTags(): Promise<string[]> {
   const posts = await getAllPosts()
-
   const tagsSet = new Set<string>()
 
   posts.forEach((post) => {
-    post.tags.forEach((tag) =>
-      tagsSet.add(tag)
-    )
+    post.tags.forEach((tag) => tagsSet.add(tag))
   })
 
   return Array.from(tagsSet).sort()
 }
 
-export async function getPostsByTag(
-  tag: string
-): Promise<Post[]> {
+export async function getPostsByTag(tag: string): Promise<Post[]> {
   const posts = await getAllPosts()
-
-  return posts.filter((post) =>
-    post.tags.includes(tag)
-  )
+  return posts.filter((post) => post.tags.includes(tag))
 }
