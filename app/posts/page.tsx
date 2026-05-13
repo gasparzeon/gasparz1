@@ -5,56 +5,72 @@ import { TagFilter } from '@/components/tag-filter'
 
 export const metadata: Metadata = {
   title: 'Posts',
-  description: 'Todos os posts sobre desenvolvimento, arquitetura e tecnologia.',
+  description:
+    'Todos os posts sobre desenvolvimento, arquitetura e tecnologia.',
 }
 
 interface PostsPageProps {
-  searchParams: Promise<{ tag?: string }>
+  searchParams: Promise<{
+    tag?: string
+  }>
 }
 
-export default async function PostsPage({ searchParams }: PostsPageProps) {
+export default async function PostsPage({
+  searchParams,
+}: PostsPageProps) {
   const params = await searchParams
-  const [posts, allTags] = await Promise.all([
-    getAllPosts(),
-    getAllTags(),
-  ])
+
+  // DEBUG
+  const posts = await getAllPosts()
+
+  console.log('POSTS:', posts)
+
+  const allTags = await getAllTags()
 
   const filteredPosts = params.tag
-    ? posts.filter((post) => post.tags.includes(params.tag!))
+    ? posts.filter((post) =>
+        post.tags.includes(params.tag!)
+      )
     : posts
 
   return (
     <div className="container mx-auto max-w-4xl px-4 py-16">
       <header className="mb-12">
         <h1 className="mb-4">Posts</h1>
+
         <p className="text-lg text-muted-foreground">
-          {posts.length} {posts.length === 1 ? 'post publicado' : 'posts publicados'}
+          {filteredPosts.length}{' '}
+          {filteredPosts.length === 1
+            ? 'post publicado'
+            : 'posts publicados'}
         </p>
       </header>
 
-      {/* Tag Filter */}
+      {/* Tags */}
       {allTags.length > 0 && (
-        <TagFilter 
-          tags={allTags} 
-          activeTag={params.tag} 
+        <TagFilter
+          tags={allTags}
+          activeTag={params.tag}
           className="mb-8"
         />
       )}
 
-      {/* Posts List */}
+      {/* Posts */}
       {filteredPosts.length > 0 ? (
         <div className="flex flex-col gap-6">
           {filteredPosts.map((post) => (
-            <PostCard key={post.slug} post={post} />
+            <PostCard
+              key={post.slug}
+              post={post}
+            />
           ))}
         </div>
       ) : (
         <div className="rounded-lg border border-border bg-card p-8 text-center">
           <p className="text-muted-foreground">
-            {params.tag 
+            {params.tag
               ? `Nenhum post encontrado com a tag "${params.tag}".`
-              : 'Nenhum post publicado ainda.'
-            }
+              : 'Nenhum post publicado ainda.'}
           </p>
         </div>
       )}
