@@ -14,9 +14,7 @@ export default config({
   collections: {
     posts: collection({
       label: 'Posts',
-
       slugField: 'title',
-
       path: 'content/posts/*',
 
       format: {
@@ -44,9 +42,9 @@ export default config({
           },
         }),
 
-        updatedAt: fields.date({
+        updatedAt: fields.text({
           label: 'Última Atualização',
-          description: 'Opcional',
+          description: 'Opcional. Use o formato YYYY-MM-DD se quiser preencher.',
         }),
 
         tags: fields.array(
@@ -55,8 +53,7 @@ export default config({
           }),
           {
             label: 'Tags',
-            itemLabel: (props) =>
-              props.value || 'Nova tag',
+            itemLabel: (props) => props.value || 'Nova tag',
           }
         ),
 
@@ -67,14 +64,9 @@ export default config({
 
         coverImage: fields.image({
           label: 'Imagem de Capa',
-
           directory: 'public/images/posts',
-
           publicPath: '/images/posts/',
-
-          description:
-            'Imagem exibida no topo do post',
-
+          description: 'Imagem exibida no topo do post',
           validation: {
             isRequired: false,
           },
@@ -82,17 +74,13 @@ export default config({
 
         content: fields.mdx({
           label: 'Conteúdo',
-
           extension: 'mdx',
-
           options: {
             image: {
               directory: 'public/images/posts',
               publicPath: '/images/posts/',
             },
-
             divider: true,
-
             link: true,
           },
         }),
