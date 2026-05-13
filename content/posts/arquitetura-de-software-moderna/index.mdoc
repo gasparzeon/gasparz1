@@ -1,0 +1,65 @@
+---
+title: Arquitetura de Software Moderna
+excerpt: >-
+  Uma reflexão sobre os padrões que moldam como construímos sistemas hoje, desde
+  microserviços até arquiteturas orientadas a eventos.
+publishedAt: 2026-05-10
+tags:
+  - arquitetura
+  - sistemas
+  - backend
+draft: false
+---
+Ao longo dos últimos anos, a forma como pensamos sobre arquitetura de software passou por transformações significativas. O que antes era dominado por monolitos bem estruturados agora divide espaço com microserviços, serverless e arquiteturas orientadas a eventos.
+
+## A Evolução do Pensamento Arquitetural
+
+Não existe uma "arquitetura perfeita" - existe a arquitetura certa para o problema certo. Essa é talvez a lição mais importante que aprendi depois de anos construindo sistemas.
+
+```typescript
+// Um exemplo simples de event-driven architecture
+interface DomainEvent {
+  type: string
+  payload: unknown
+  timestamp: Date
+  aggregateId: string
+}
+
+class EventBus {
+  private handlers = new Map<string, ((event: DomainEvent) => void)[]>()
+
+  subscribe(eventType: string, handler: (event: DomainEvent) => void) {
+    const existing = this.handlers.get(eventType) || []
+    this.handlers.set(eventType, [...existing, handler])
+  }
+
+  publish(event: DomainEvent) {
+    const handlers = this.handlers.get(event.type) || []
+    handlers.forEach(handler => handler(event))
+  }
+}
+```
+
+## Quando Microserviços Fazem Sentido
+
+A pergunta não deveria ser "devo usar microserviços?" mas sim "meu problema requer a complexidade operacional que microserviços trazem?"
+
+Alguns sinais de que você pode se beneficiar:
+
+- **Times independentes** - Diferentes equipes precisam deployar de forma autônoma
+- **Escalabilidade granular** - Partes específicas do sistema têm demandas muito diferentes
+- **Domínios bem definidos** - Os bounded contexts são claros e estáveis
+
+## O Custo Oculto da Distribuição
+
+Sistemas distribuídos trazem desafios que não existem em monolitos:
+
+1. **Observabilidade** - Traces distribuídos, métricas correlacionadas, logs centralizados
+2. **Consistência eventual** - Nem tudo pode ser uma transação ACID
+3. **Resiliência** - Circuit breakers, retries, timeouts, fallbacks
+
+A complexidade não desaparece - ela apenas se move para outro lugar.
+
+## Conclusão
+
+A melhor arquitetura é aquela que sua equipe consegue operar com confiança. Comece simples, evolua quando necessário, e sempre questione se a complexidade adicional vale o custo.

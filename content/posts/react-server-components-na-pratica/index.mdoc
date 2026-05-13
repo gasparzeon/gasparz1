@@ -1,0 +1,135 @@
+---
+title: React Server Components na Prática
+excerpt: >-
+  Como os Server Components mudaram minha forma de pensar sobre data fetching,
+  composição e performance em aplicações React.
+publishedAt: 2026-04-28
+tags:
+  - react
+  - nextjs
+  - frontend
+  - performance
+draft: false
+---
+React Server Components representam uma mudança fundamental na forma como construímos aplicações React. Depois de meses usando RSC em produção, quero compartilhar o que aprendi.
+
+## O Mental Model
+
+A primeira coisa a entender é que RSC não são sobre "renderizar no servidor" - são sobre **onde** o código executa e **quando** os dados são carregados.
+
+```tsx
+// Este componente NUNCA vai para o bundle do cliente
+async function PostList() {
+  const posts = await db.posts.findMany({
+    orderBy: { createdAt: 'desc' },
+    take: 10,
+  })
+
+  return (
+    <ul>
+      {posts.map(post => (
+        <PostCard key={post.id} post={post} />
+      ))}
+    </ul>
+  )
+}
+```
+
+O código acima faz query direto no banco, sem API intermediária, sem loading states, sem `useEffect`. O resultado é HTML que chega pronto para o browser.
+
+## Composição de Server e Client Components
+
+O verdadeiro poder está na composição. Server Components podem conter Client Components, mas não vice-versa:
+
+```tsx
+// ServerComponent.tsx (default, sem 'use client')
+import { InteractiveButton } from './InteractiveButton'
+
+async function ArticleWithActions({ id }: { id: string }) {
+  const article = await getArticle(id)
+  
+  return (
+    <article>
+      <h1>{article.title}</h1>
+      <div>{article.content}</div>
+      
+      {/* Client Component dentro de Server Component */}
+      <InteractiveButton articleId={id} />
+    </article>
+  )
+}
+```
+
+```tsx
+// InteractiveButton.tsx
+'use client'
+
+import { useState } from 'react'
+
+export function InteractiveButton({ articleId }: { articleId: string }) {
+  const [liked, setLiked] = useState(false)
+  
+  return (
+    <button onClick={() => setLiked(!liked)}>
+      {liked ? 'Curtido' : 'Curtir'}
+    </button>
+  )
+}
+```
+
+## Patterns que Funcionam Bem
+
+### 1. Data Fetching em Paralelo
+
+```tsx
+async function Dashboard() {
+  // Queries executam em paralelo automaticamente
+  const [user, posts, notifications] = await Promise.all([
+    getUser(),
+    getPosts(),
+    getNotifications(),
+  ])
+
+  return (
+    <div>
+      <UserHeader user={user} />
+      <PostList posts={posts} />
+      <NotificationBadge count={notifications.length} />
+    </div>
+  )
+}
+```
+
+### 2. Streaming com Suspense
+
+```tsx
+import { Suspense } from 'react'
+
+function Page() {
+  return (
+    <main>
+      <h1>Dashboard</h1>
+      
+      {/* Carrega imediatamente */}
+      <QuickStats />
+      
+      {/* Streama quando pronto */}
+      <Suspense fallback={<ChartSkeleton />}>
+        <SlowAnalyticsChart />
+      </Suspense>
+    </main>
+  )
+}
+```
+
+## O Que Ainda Prefiro no Cliente
+
+Nem tudo precisa ser Server Component:
+
+- **Forms interativos** - Validação em tempo real, estados de loading
+- **Componentes com muito estado local** - Modals, dropdowns, tabs
+- **Animações complexas** - Framer Motion, GSAP
+
+## Conclusão
+
+RSC não são a solução para tudo, mas mudaram fundamentalmente como penso sobre a divisão de responsabilidades. A pergunta agora é: "este componente precisa de interatividade?" Se não, provavelmente deve ser um Server Component.

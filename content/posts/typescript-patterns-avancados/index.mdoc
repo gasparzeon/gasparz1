@@ -1,0 +1,105 @@
+---
+title: TypeScript Patterns Avançados
+excerpt: >-
+  Explorando técnicas de tipagem que vão além do básico: template literal types,
+  conditional types, e padrões para APIs type-safe.
+publishedAt: 2026-05-05
+tags:
+  - typescript
+  - frontend
+  - patterns
+draft: false
+---
+TypeScript evoluiu de um "JavaScript com tipos" para uma linguagem com um sistema de tipos incrivelmente expressivo. Vamos explorar alguns padrões que podem transformar a forma como você escreve código.
+
+## Template Literal Types
+
+Uma das features mais poderosas introduzidas recentemente são os template literal types. Eles permitem criar tipos que representam padrões de strings.
+
+```typescript
+type HTTPMethod = 'GET' | 'POST' | 'PUT' | 'DELETE'
+type APIRoute = `/api/${string}`
+
+type Endpoint = `${HTTPMethod} ${APIRoute}`
+// "GET /api/users" | "POST /api/users" | ...
+
+// Extraindo partes de uma string tipada
+type ExtractRouteParams<T extends string> = 
+  T extends `${string}:${infer Param}/${infer Rest}`
+    ? Param | ExtractRouteParams<Rest>
+    : T extends `${string}:${infer Param}`
+      ? Param
+      : never
+
+type Params = ExtractRouteParams<'/users/:id/posts/:postId'>
+// "id" | "postId"
+```
+
+## Conditional Types para APIs Type-Safe
+
+Conditional types permitem criar tipos que se adaptam baseados em outros tipos:
+
+```typescript
+type ApiResponse<T> = T extends { error: true }
+  ? { success: false; error: string }
+  : { success: true; data: T }
+
+// Inferência condicional em funções
+function fetchData<T extends { error: true } | object>(
+  endpoint: string
+): Promise<ApiResponse<T>> {
+  // implementação
+}
+```
+
+## O Padrão Builder com Types
+
+Um padrão que uso frequentemente é combinar o builder pattern com tipos para criar APIs fluentes e type-safe:
+
+```typescript
+type QueryBuilder<T, Selected extends keyof T = never> = {
+  select<K extends Exclude<keyof T, Selected>>(
+    field: K
+  ): QueryBuilder<T, Selected | K>
+  
+  where<K extends keyof T>(
+    field: K,
+    value: T[K]
+  ): QueryBuilder<T, Selected>
+  
+  execute(): Promise<Pick<T, Selected>[]>
+}
+
+// Uso
+const result = await db
+  .from('users')
+  .select('id')
+  .select('name')
+  .where('active', true)
+  .execute()
+// result é automaticamente tipado como { id: string; name: string }[]
+```
+
+## Branded Types para Segurança
+
+Branded types previnem erros de misturar valores que têm o mesmo tipo primitivo mas significados diferentes:
+
+```typescript
+type Brand<T, B> = T & { __brand: B }
+
+type UserId = Brand<string, 'UserId'>
+type PostId = Brand<string, 'PostId'>
+
+function getUser(id: UserId) { /* ... */ }
+function getPost(id: PostId) { /* ... */ }
+
+const userId = 'abc' as UserId
+const postId = 'xyz' as PostId
+
+getUser(userId) // OK
+getUser(postId) // Erro de tipo!
+```
+
+## Conclusão
+
+O sistema de tipos do TypeScript é uma ferramenta poderosa quando usada corretamente. Esses padrões não são apenas exercícios acadêmicos - eles previnem bugs reais e tornam o código mais expressivo e auto-documentado.
