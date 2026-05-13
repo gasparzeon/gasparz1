@@ -8,11 +8,11 @@ export type Post = {
   slug: string
   title: string
   excerpt: string
-  publishedAt: string | null
-  updatedAt: string | null
-  tags: readonly string[]
+  publishedAt: string
+  updatedAt?: string
+  tags: string[]
   draft: boolean
-  coverImage: string | null
+  coverImage?: string | null
   readingTime: string
 }
 
@@ -21,69 +21,119 @@ export type PostWithContent = Post & {
 }
 
 export async function getAllPosts(): Promise<Post[]> {
-  const posts = await reader.collections.posts.all()
+  const entries =
+    await reader.collections.posts.all()
 
-  const postsWithMeta = await Promise.all(
-    posts.map(async (post) => {
-      const content = await post.entry.content()
-      const stats = readingTime(content || '')
+  const posts = await Promise.all(
+    entries.map(async (post) => {
+      const content =
+        await post.entry.content()
+
+      const stats = readingTime(content)
 
       return {
         slug: post.slug,
+
         title: post.entry.title,
-        excerpt: post.entry.excerpt,
-        publishedAt: post.entry.publishedAt,
-        updatedAt: post.entry.updatedAt || null,
-        tags: post.entry.tags || [],
-        draft: post.entry.draft || false,
-        coverImage: post.entry.coverImage || null,
-        readingTime: stats.text.replace('min read', 'min'),
+
+        excerpt:
+          post.entry.excerpt || '',
+
+        publishedAt:
+          post.entry.publishedAt,
+
+        updatedAt:
+          post.entry.updatedAt || '',
+
+        tags:
+          post.entry.tags || [],
+
+        draft:
+          post.entry.draft ?? false,
+
+        coverImage:
+          post.entry.coverImage || null,
+
+        readingTime:
+          stats.text || '1 min',
       }
     })
   )
 
-  return postsWithMeta
-    .filter((post) => !post.draft)
-    .sort((a, b) => {
-      if (!a.publishedAt || !b.publishedAt) return 0
-      return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
-    })
+  return posts
+    .filter((post) => post.draft === false)
+    .sort(
+      (a, b) =>
+        new Date(
+          b.publishedAt
+        ).getTime() -
+        new Date(
+          a.publishedAt
+        ).getTime()
+    )
 }
 
-export async function getPostBySlug(slug: string): Promise<PostWithContent | null> {
-  const post = await reader.collections.posts.read(slug)
+export async function getPostBySlug(
+  slug: string
+): Promise<PostWithContent | null> {
+  const post =
+    await reader.collections.posts.read(
+      slug
+    )
 
   if (!post) return null
 
-  const content = await post.content()
-  const stats = readingTime(content || '')
+  const content =
+    await post.content()
+
+  const stats = readingTime(content)
 
   return {
     slug,
+
     title: post.title,
-    excerpt: post.excerpt,
-    publishedAt: post.publishedAt,
-    updatedAt: post.updatedAt || null,
+
+    excerpt: post.excerpt || '',
+
+    publishedAt:
+      post.publishedAt,
+
+    updatedAt:
+      post.updatedAt || '',
+
     tags: post.tags || [],
-    draft: post.draft || false,
-    coverImage: post.coverImage || null,
-    readingTime: stats.text.replace('min read', 'min'),
-    content: content || '',
+
+    draft:
+      post.draft ?? false,
+
+    coverImage:
+      post.coverImage || null,
+
+    readingTime:
+      stats.text || '1 min',
+
+    content,
   }
 }
 
-export async function getAllTags(): Promise<string[]> {
+export async function getAllTags(): Promise<
+  string[]
+> {
   const posts = await getAllPosts()
-  const tagsSet = new Set<string>()
 
-  posts.forEach((post) => {
-    post.tags.forEach((tag) => tagsSet.add(tag))
-  })
-
-  return Array.from(tagsSet).sort()
+  return Array.from(
+    new Set(
+      posts.flatMap((post) => post.tags)
+    )
+  )
 }
 
-export async function getPostsByTag(tag: string): Promise<Post[]> {
+export async function getPostsByTag(
+  tag: string
+): Promise<Post[]> {
   const posts = await getAllPosts()
-  return posts.filter((post) => post.tags.includes(tag))
+
+  return posts.filter((post) =>
+    post.tags.includes(tag)
+  )
 }
