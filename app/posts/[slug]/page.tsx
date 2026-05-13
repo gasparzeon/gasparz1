@@ -2,11 +2,11 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
-import { compileMDX } from 'next-mdx-remote/rsc'
 
 import { getAllPosts, getPostBySlug } from '@/lib/content'
 import { formatDate } from '@/lib/format'
 
+import { PostContent } from '@/components/post-content'
 import { TableOfContents } from '@/components/table-of-contents'
 import { ShareButtons } from '@/components/share-buttons'
 import { ReadingProgress } from '@/components/reading-progress'
@@ -28,7 +28,6 @@ export async function generateMetadata({
   params,
 }: PostPageProps): Promise<Metadata> {
   const { slug } = await params
-
   const post = await getPostBySlug(slug)
 
   if (!post) return {}
@@ -36,7 +35,6 @@ export async function generateMetadata({
   return {
     title: post.title,
     description: post.excerpt,
-
     openGraph: {
       title: post.title,
       description: post.excerpt,
@@ -45,7 +43,6 @@ export async function generateMetadata({
       modifiedTime: post.updatedAt || undefined,
       tags: post.tags as string[],
     },
-
     twitter: {
       card: 'summary_large_image',
       title: post.title,
@@ -58,29 +55,17 @@ export default async function PostPage({
   params,
 }: PostPageProps) {
   const { slug } = await params
-
   const post = await getPostBySlug(slug)
 
   if (!post) {
     notFound()
   }
 
-  // CORREÇÃO PRINCIPAL
-  const source =
-    typeof post.content === 'string'
-      ? post.content
-      : ''
-
-  const { content } = await compileMDX({
-    source,
-  })
-
   return (
     <>
       <ReadingProgress />
 
       <article className="container mx-auto max-w-4xl px-4 py-16">
-        {/* Back Link */}
         <Link
           href="/posts"
           className="mb-8 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -89,9 +74,7 @@ export default async function PostPage({
           Voltar para posts
         </Link>
 
-        {/* Header */}
         <header className="mb-12">
-          {/* Tags */}
           {post.tags.length > 0 && (
             <div className="mb-4 flex flex-wrap gap-2">
               {post.tags.map((tag) => (
@@ -106,54 +89,35 @@ export default async function PostPage({
             </div>
           )}
 
-          {/* Title */}
-          <h1 className="mb-4">
-            {post.title}
-          </h1>
+          <h1 className="mb-4">{post.title}</h1>
 
-          {/* Meta */}
           <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-            <time
-              dateTime={
-                post.publishedAt || undefined
-              }
-            >
+            <time dateTime={post.publishedAt || undefined}>
               {post.publishedAt
                 ? formatDate(post.publishedAt)
                 : 'Sem data'}
             </time>
 
-            <span className="text-border">
-              •
-            </span>
+            <span className="text-border">•</span>
 
-            <span>
-              {post.readingTime} de leitura
-            </span>
+            <span>{post.readingTime} de leitura</span>
 
             {post.updatedAt && (
               <>
-                <span className="text-border">
-                  •
-                </span>
-
+                <span className="text-border">•</span>
                 <span>
-                  Atualizado em{' '}
-                  {formatDate(post.updatedAt)}
+                  Atualizado em {formatDate(post.updatedAt)}
                 </span>
               </>
             )}
           </div>
         </header>
 
-        {/* Layout */}
         <div className="relative lg:grid lg:grid-cols-[1fr_200px] lg:gap-12">
-          {/* Conteúdo MDX */}
           <div className="prose prose-invert max-w-none">
-            {content}
+            <PostContent content={post.content} />
           </div>
 
-          {/* Sidebar */}
           <aside className="hidden lg:block">
             <div className="sticky top-24">
               <TableOfContents />
@@ -161,10 +125,8 @@ export default async function PostPage({
           </aside>
         </div>
 
-        {/* Comments */}
         <Comments />
 
-        {/* Footer */}
         <footer className="mt-16 border-t border-border pt-8">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
             <ShareButtons title={post.title} />

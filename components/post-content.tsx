@@ -1,23 +1,52 @@
-import { MDXRemote } from 'next-mdx-remote/rsc'
+export async function getAllPosts(): Promise<Post[]> {
+  const posts =
+    await reader.collections.posts.all()
 
-interface PostContentProps {
-  content: string
-}
+  const postsWithMeta = await Promise.all(
+    posts.map(async (post) => {
+      const content =
+        await post.entry.content()
 
-export function PostContent({
-  content,
-}: PostContentProps) {
-  if (!content) {
-    return (
-      <div className="prose prose-invert max-w-none">
-        <p>Sem conteúdo.</p>
-      </div>
-    )
-  }
+      const stats = readingTime(content)
 
-  return (
-    <div className="prose prose-invert max-w-none">
-      <MDXRemote source={content} />
-    </div>
+      return {
+        slug: post.slug,
+        title: post.entry.title,
+        excerpt: post.entry.excerpt,
+        publishedAt:
+          post.entry.publishedAt,
+        updatedAt:
+          post.entry.updatedAt || null,
+        tags: post.entry.tags || [],
+        draft:
+          post.entry.draft || false,
+        coverImage:
+          post.entry.coverImage || null,
+        readingTime:
+          stats.text.replace(
+            'min read',
+            'min'
+          ),
+      }
+    })
   )
+
+  return postsWithMeta
+    .filter((post) => !post.draft)
+    .sort((a, b) => {
+      if (
+        !a.publishedAt ||
+        !b.publishedAt
+      )
+        return 0
+
+      return (
+        new Date(
+          b.publishedAt
+        ).getTime() -
+        new Date(
+          a.publishedAt
+        ).getTime()
+      )
+    })
 }
