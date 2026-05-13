@@ -15,7 +15,7 @@ export default config({
     posts: collection({
       label: 'Posts',
       slugField: 'title',
-      path: 'content/posts/*',
+      path: 'content/posts/*/index',
 
       format: {
         contentField: 'content',
