@@ -5,8 +5,7 @@ import { TagFilter } from '@/components/tag-filter'
 
 export const metadata: Metadata = {
   title: 'Posts',
-  description:
-    'Todos os posts sobre desenvolvimento, arquitetura e tecnologia.',
+  description: 'Todos os posts publicados.',
 }
 
 interface PostsPageProps {
@@ -20,11 +19,7 @@ export default async function PostsPage({
 }: PostsPageProps) {
   const params = await searchParams
 
-  // DEBUG
   const posts = await getAllPosts()
-
-  console.log('POSTS:', posts)
-
   const allTags = await getAllTags()
 
   const filteredPosts = params.tag
@@ -34,7 +29,7 @@ export default async function PostsPage({
     : posts
 
   return (
-    <div className="container mx-auto max-w-4xl px-4 py-16">
+    <main className="container mx-auto max-w-4xl px-4 py-16">
       <header className="mb-12">
         <h1 className="mb-4">Posts</h1>
 
@@ -46,7 +41,6 @@ export default async function PostsPage({
         </p>
       </header>
 
-      {/* Tags */}
       {allTags.length > 0 && (
         <TagFilter
           tags={allTags}
@@ -55,7 +49,6 @@ export default async function PostsPage({
         />
       )}
 
-      {/* Posts */}
       {filteredPosts.length > 0 ? (
         <div className="flex flex-col gap-6">
           {filteredPosts.map((post) => (
@@ -68,12 +61,10 @@ export default async function PostsPage({
       ) : (
         <div className="rounded-lg border border-border bg-card p-8 text-center">
           <p className="text-muted-foreground">
-            {params.tag
-              ? `Nenhum post encontrado com a tag "${params.tag}".`
-              : 'Nenhum post publicado ainda.'}
+            Nenhum post publicado ainda.
           </p>
         </div>
       )}
-    </div>
+    </main>
   )
 }
