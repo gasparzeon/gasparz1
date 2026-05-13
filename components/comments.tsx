@@ -5,13 +5,15 @@ import Giscus from '@giscus/react'
 export function Comments() {
   return (
     <div className="mt-16">
-      <h2 className="mb-8 text-2xl font-bold">Comentários</h2>
+      <h2 className="mb-8 text-2xl font-bold">
+        Comentários
+      </h2>
 
       <Giscus
         repo="gasparzeon/gasparz1"
-        repoId="COLE_SEU_REPO_ID"
+        repoId="R_kgDOScQaKA"
         category="General"
-        categoryId="COLE_SEU_CATEGORY_ID"
+        categoryId="DIC_kwDOScQaKM4C89aO"
         mapping="pathname"
         strict="0"
         reactionsEnabled="1"
