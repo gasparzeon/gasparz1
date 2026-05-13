@@ -1,18 +1,19 @@
-import { createReader } from '@keystatic/core/reader'
-import config from '@/keystatic.config'
+import fs from 'fs'
+import path from 'path'
+import matter from 'gray-matter'
 import readingTime from 'reading-time'
 
-const reader = createReader(process.cwd(), config)
+const POSTS_DIR = path.join(process.cwd(), 'content/posts')
 
 export type Post = {
   slug: string
   title: string
   excerpt: string
   publishedAt: string
-  updatedAt?: string
+  updatedAt: string
   tags: string[]
   draft: boolean
-  coverImage?: string | null
+  coverImage: string | null
   readingTime: string
 }
 
@@ -20,120 +21,79 @@ export type PostWithContent = Post & {
   content: string
 }
 
+function getPostFiles() {
+  if (!fs.existsSync(POSTS_DIR)) return []
+
+  return fs
+    .readdirSync(POSTS_DIR)
+    .filter((file) => file.endsWith('.mdx'))
+}
+
 export async function getAllPosts(): Promise<Post[]> {
-  const entries =
-    await reader.collections.posts.all()
+  const files = getPostFiles()
 
-  const posts = await Promise.all(
-    entries.map(async (post) => {
-      const content =
-        await post.entry.content()
+  const posts = files.map((file) => {
+    const slug = file.replace(/\.mdx$/, '')
+    const filePath = path.join(POSTS_DIR, file)
+    const raw = fs.readFileSync(filePath, 'utf8')
+    const { data, content } = matter(raw)
+    const stats = readingTime(content)
 
-      const stats = readingTime(content)
-
-      return {
-        slug: post.slug,
-
-        title: post.entry.title,
-
-        excerpt:
-          post.entry.excerpt || '',
-
-        publishedAt:
-          post.entry.publishedAt,
-
-        updatedAt:
-          post.entry.updatedAt || '',
-
-        tags:
-          post.entry.tags || [],
-
-        draft:
-          post.entry.draft ?? false,
-
-        coverImage:
-          post.entry.coverImage || null,
-
-        readingTime:
-          stats.text || '1 min',
-      }
-    })
-  )
+    return {
+      slug,
+      title: data.title || slug,
+      excerpt: data.excerpt || '',
+      publishedAt: data.publishedAt || '',
+      updatedAt: data.updatedAt || '',
+      tags: data.tags || [],
+      draft: data.draft ?? false,
+      coverImage: data.coverImage || null,
+      readingTime: stats.text.replace('min read', 'min'),
+    }
+  })
 
   return posts
     .filter((post) => post.draft === false)
     .sort(
       (a, b) =>
-        new Date(
-          b.publishedAt
-        ).getTime() -
-        new Date(
-          a.publishedAt
-        ).getTime()
+        new Date(b.publishedAt).getTime() -
+        new Date(a.publishedAt).getTime()
     )
 }
 
 export async function getPostBySlug(
   slug: string
 ): Promise<PostWithContent | null> {
-  const post =
-    await reader.collections.posts.read(
-      slug
-    )
+  const filePath = path.join(POSTS_DIR, `${slug}.mdx`)
 
-  if (!post) return null
+  if (!fs.existsSync(filePath)) return null
 
-  const content =
-    await post.content()
-
+  const raw = fs.readFileSync(filePath, 'utf8')
+  const { data, content } = matter(raw)
   const stats = readingTime(content)
 
   return {
     slug,
-
-    title: post.title,
-
-    excerpt: post.excerpt || '',
-
-    publishedAt:
-      post.publishedAt,
-
-    updatedAt:
-      post.updatedAt || '',
-
-    tags: post.tags || [],
-
-    draft:
-      post.draft ?? false,
-
-    coverImage:
-      post.coverImage || null,
-
-    readingTime:
-      stats.text || '1 min',
-
+    title: data.title || slug,
+    excerpt: data.excerpt || '',
+    publishedAt: data.publishedAt || '',
+    updatedAt: data.updatedAt || '',
+    tags: data.tags || [],
+    draft: data.draft ?? false,
+    coverImage: data.coverImage || null,
+    readingTime: stats.text.replace('min read', 'min'),
     content,
   }
 }
 
-export async function getAllTags(): Promise<
-  string[]
-> {
+export async function getAllTags(): Promise<string[]> {
   const posts = await getAllPosts()
 
-  return Array.from(
-    new Set(
-      posts.flatMap((post) => post.tags)
-    )
-  )
+  return Array.from(new Set(posts.flatMap((post) => post.tags))).sort()
 }
 
-export async function getPostsByTag(
-  tag: string
-): Promise<Post[]> {
+export async function getPostsByTag(tag: string): Promise<Post[]> {
   const posts = await getAllPosts()
 
-  return posts.filter((post) =>
-    post.tags.includes(tag)
-  )
+  return posts.filter((post) => post.tags.includes(tag))
 }
