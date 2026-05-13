@@ -1,12 +1,18 @@
-import { format, parseISO } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
+export function formatDate(date: string | Date | null | undefined) {
+  if (!date) return ''
 
-export function formatDate(dateString: string): string {
-  const date = parseISO(dateString)
-  return format(date, "d 'de' MMMM, yyyy", { locale: ptBR })
-}
+  const parsedDate =
+    date instanceof Date
+      ? date
+      : new Date(date)
 
-export function formatDateShort(dateString: string): string {
-  const date = parseISO(dateString)
-  return format(date, "d MMM yyyy", { locale: ptBR })
+  if (Number.isNaN(parsedDate.getTime())) {
+    return ''
+  }
+
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(parsedDate)
 }
