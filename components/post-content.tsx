@@ -1,11 +1,7 @@
-'use client'
-
-import { DocumentRenderer } from '@keystatic/core/renderer'
-import { CodeBlock } from '@/components/mdx/code-block'
-import { Callout } from '@/components/mdx/callout'
+import { MDXRemote } from 'next-mdx-remote/rsc'
 
 interface PostContentProps {
-  content: any
+  content: string
 }
 
 function slugify(text: string) {
@@ -18,63 +14,34 @@ function slugify(text: string) {
     .replace(/\s+/g, '-')
 }
 
-export function PostContent({
-  content,
-}: PostContentProps) {
-  if (!content) {
-    return null
+const components = {
+  h2: (props: any) => {
+    const text = String(props.children)
+    const id = slugify(text)
+
+    return (
+      <h2 id={id} className="scroll-mt-28">
+        {props.children}
+      </h2>
+    )
+  },
+
+  h3: (props: any) => {
+    const text = String(props.children)
+    const id = slugify(text)
+
+    return (
+      <h3 id={id} className="scroll-mt-28">
+        {props.children}
+      </h3>
+    )
+  },
+}
+
+export function PostContent({ content }: PostContentProps) {
+  if (!content || content.trim() === '') {
+    return <p>Sem conteúdo.</p>
   }
 
-  return (
-    <DocumentRenderer
-      document={content}
-      renderers={{
-        block: {
-          code: (props: any) => (
-            <CodeBlock
-              language={
-                props.language || 'text'
-              }
-            >
-              {props.children}
-            </CodeBlock>
-          ),
-
-          heading: ({
-            level,
-            children,
-          }: any) => {
-            const Tag =
-              `h${level}` as keyof JSX.IntrinsicElements
-
-            const text =
-              typeof children === 'string'
-                ? children
-                : Array.isArray(children)
-                ? children.join('')
-                : ''
-
-            const id = slugify(text)
-
-            return (
-              <Tag
-                id={id}
-                className="scroll-mt-28"
-              >
-                {children}
-              </Tag>
-            )
-          },
-
-          blockquote: ({
-            children,
-          }: any) => (
-            <Callout type="info">
-              {children}
-            </Callout>
-          ),
-        },
-      }}
-    />
-  )
+  return <MDXRemote source={content} components={components} />
 }
