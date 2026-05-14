@@ -2,11 +2,13 @@ import type { Metadata, Viewport } from 'next'
 import { IBM_Plex_Sans, JetBrains_Mono } from 'next/font/google'
 import localFont from 'next/font/local'
 import { Analytics } from '@vercel/analytics/next'
+
 import { ThemeProvider } from '@/components/theme-provider'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 import { SearchWrapper } from '@/components/search-wrapper'
 import { PlausibleAnalytics } from '@/components/plausible-analytics'
+
 import './globals.css'
 
 const satoshi = localFont({
@@ -50,28 +52,70 @@ const jetbrainsMono = JetBrains_Mono({
   display: 'swap',
 })
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  'https://gaspar-blog.vercel.app'
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
+
   title: {
-    default: 'Gaspar - 2026',
-    template: '%s | Gaspar',
+    default: 'Gaspar Labs',
+    template: '%s | Gaspar Labs',
   },
-  description: 'Um espaco para pensar em voz alta sobre o craft de construir e entender sistemas.',
-  keywords: ['desenvolvimento', 'programacao', 'software', 'tecnologia', 'arquitetura', 'sistemas'],
+
+  description:
+    'Research, systems, cybersecurity, IA e underground web.',
+
+  keywords: [
+    'gaspar labs',
+    'desenvolvimento',
+    'programacao',
+    'software',
+    'tecnologia',
+    'arquitetura',
+    'sistemas',
+    'cybersecurity',
+    'hacking',
+    'ia',
+    'internet',
+  ],
+
   authors: [{ name: 'Gaspar' }],
   creator: 'Gaspar',
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
+
+  icons: {
+    icon: '/icon.png',
+    shortcut: '/icon.png',
+    apple: '/icon.png',
+  },
+
   openGraph: {
     type: 'website',
     locale: 'pt_BR',
-    siteName: 'Gaspar',
-    title: 'Gaspar - 2026',
-    description: 'Um espaco para pensar em voz alta sobre o craft de construir e entender sistemas.',
+    url: siteUrl,
+    siteName: 'Gaspar Labs',
+    title: 'Gaspar Labs',
+    description:
+      'Research, systems, cybersecurity, IA e underground web.',
+    images: [
+      {
+        url: '/icon.png',
+        width: 512,
+        height: 512,
+        alt: 'Gaspar Labs',
+      },
+    ],
   },
+
   twitter: {
-    card: 'summary_large_image',
-    title: 'Gaspar',
-    description: 'Gaspar - 2026',
+    card: 'summary',
+    title: 'Gaspar Labs',
+    description:
+      'Research, systems, cybersecurity, IA e underground web.',
+    images: ['/icon.png'],
   },
+
   robots: {
     index: true,
     follow: true,
@@ -80,8 +124,14 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: dark)', color: '#0a0a0a' },
-    { media: '(prefers-color-scheme: light)', color: '#fafafa' },
+    {
+      media: '(prefers-color-scheme: dark)',
+      color: '#08090b',
+    },
+    {
+      media: '(prefers-color-scheme: light)',
+      color: '#fafafa',
+    },
   ],
   width: 'device-width',
   initialScale: 1,
@@ -93,12 +143,12 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html 
-      lang="pt-BR" 
-      suppressHydrationWarning 
+    <html
+      lang="pt-BR"
+      suppressHydrationWarning
       className={`${satoshi.variable} ${ibmPlexSans.variable} ${jetbrainsMono.variable}`}
     >
-      <body className="font-sans antialiased min-h-screen flex flex-col">
+      <body className="min-h-screen font-sans antialiased flex flex-col">
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
@@ -106,14 +156,19 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <Header />
-          <main className="flex-1">
-            {children}
-          </main>
+
+          <main className="flex-1">{children}</main>
+
           <Footer />
+
           <SearchWrapper />
         </ThemeProvider>
+
         {process.env.NODE_ENV === 'production' && <Analytics />}
-        <PlausibleAnalytics domain={process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN} />
+
+        <PlausibleAnalytics
+          domain={process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN}
+        />
       </body>
     </html>
   )

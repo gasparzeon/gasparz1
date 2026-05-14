@@ -27,7 +27,7 @@ export default async function HomePage() {
           <h1 className="max-w-5xl text-6xl font-black leading-[0.9] tracking-[-0.08em] text-white md:text-8xl">
             Gaspar
             <span className="ml-4 text-slate-600">
-              2026
+              Labs
             </span>
           </h1>
 
