@@ -1,83 +1,65 @@
 'use client'
 
-import * as React from 'react'
-import { cn } from '@/lib/utils'
+import { useEffect, useState } from 'react'
 
-interface TOCItem {
+type Heading = {
   id: string
   text: string
   level: number
 }
 
 export function TableOfContents() {
-  const [headings, setHeadings] = React.useState<TOCItem[]>([])
-  const [activeId, setActiveId] = React.useState<string>('')
+  const [headings, setHeadings] = useState<
+    Heading[]
+  >([])
 
-  React.useEffect(() => {
-    const article = document.querySelector('article')
-    if (!article) return
+  useEffect(() => {
+    const elements = Array.from(
+      document.querySelectorAll(
+        'article h2, article h3'
+      )
+    )
 
-    const elements = article.querySelectorAll('h2, h3')
-    const items: TOCItem[] = Array.from(elements).map((el) => ({
+    const items = elements.map((el) => ({
       id: el.id,
       text: el.textContent || '',
-      level: el.tagName === 'H2' ? 2 : 3,
+      level: Number(el.tagName[1]),
     }))
-    
+
     setHeadings(items)
   }, [])
 
-  React.useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setActiveId(entry.target.id)
-          }
-        })
-      },
-      {
-        rootMargin: '-80px 0px -80% 0px',
-      }
-    )
-
-    headings.forEach(({ id }) => {
-      const element = document.getElementById(id)
-      if (element) observer.observe(element)
-    })
-
-    return () => observer.disconnect()
-  }, [headings])
-
-  if (headings.length === 0) return null
+  if (headings.length === 0) {
+    return null
+  }
 
   return (
-    <nav className="text-sm">
-      <p className="mb-4 font-medium text-foreground">Neste artigo</p>
-      <ul className="space-y-2">
-        {headings.map((heading) => (
-          <li key={heading.id}>
-            <a
-              href={`#${heading.id}`}
-              onClick={(e) => {
-                e.preventDefault()
-                document.getElementById(heading.id)?.scrollIntoView({
-                  behavior: 'smooth',
-                })
-              }}
-              className={cn(
-                'block transition-colors',
-                heading.level === 3 && 'pl-4',
-                activeId === heading.id
-                  ? 'text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
+    <div className="space-y-4">
+      <h3 className="text-sm font-semibold text-muted-foreground">
+        Neste artigo
+      </h3>
+
+      <nav>
+        <ul className="space-y-3 text-sm">
+          {headings.map((heading) => (
+            <li
+              key={heading.id}
+              className={
+                heading.level === 3
+                  ? 'ml-4'
+                  : ''
+              }
             >
-              {heading.text}
-            </a>
-          </li>
-        ))}
-      </ul>
-    </nav>
+              <a
+                href={`#${heading.id}`}
+                className="text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {heading.text}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </div>
   )
 }
