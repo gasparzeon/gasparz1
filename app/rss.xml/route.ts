@@ -1,41 +1,37 @@
 import { getAllPosts } from '@/lib/content'
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
-
 export async function GET() {
   const posts = await getAllPosts()
+  const siteUrl = 'https://gaspar-blog.vercel.app'
 
-  const itemsXml = posts
-    .map(
-      (post) => `
-    <item>
-      <title><![CDATA[${post.title}]]></title>
-      <link>${BASE_URL}/posts/${post.slug}</link>
-      <guid isPermaLink="true">${BASE_URL}/posts/${post.slug}</guid>
-      <description><![CDATA[${post.excerpt}]]></description>
-      <pubDate>${post.publishedAt ? new Date(post.publishedAt).toUTCString() : ''}</pubDate>
-      ${post.tags.map((tag) => `<category>${tag}</category>`).join('\n      ')}
-    </item>`
-    )
-    .join('\n')
+  const items = posts
+    .map((post) => {
+      return `
+        <item>
+          <title><![CDATA[${post.title}]]></title>
+          <description><![CDATA[${post.excerpt}]]></description>
+          <link>${siteUrl}/posts/${post.slug}</link>
+          <guid>${siteUrl}/posts/${post.slug}</guid>
+          <pubDate>${new Date(post.publishedAt).toUTCString()}</pubDate>
+        </item>
+      `
+    })
+    .join('')
 
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  const rss = `<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0">
   <channel>
-    <title>Gaspar - 2026</title>
-    <link>${BASE_URL}</link>
-    <description>Um espaco para pensar em voz alta sobre o craft de construir e entender sistemas.</description>
+    <title>Gaspar Blog</title>
+    <description>Research, systems, cybersecurity e underground web.</description>
+    <link>${siteUrl}</link>
     <language>pt-BR</language>
-    <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
-    <atom:link href="${BASE_URL}/rss.xml" rel="self" type="application/rss+xml"/>
-    ${itemsXml}
+    ${items}
   </channel>
 </rss>`
 
-  return new Response(xml, {
+  return new Response(rss, {
     headers: {
-      'Content-Type': 'application/xml',
-      'Cache-Control': 'public, max-age=3600, s-maxage=3600',
+      'Content-Type': 'application/rss+xml; charset=utf-8',
     },
   })
 }
