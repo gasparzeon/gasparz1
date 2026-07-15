@@ -33,7 +33,7 @@ export function Footer() {
           <div className="flex flex-col items-start gap-3 md:items-end">
             <div className="flex items-center gap-4">
               {socialLinks.map((link) => (
-                <Link
+                <Link>
                   key={link.name}
                   href={link.href}
                   target={

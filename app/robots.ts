@@ -1,6 +1,8 @@
 import type { MetadataRoute } from 'next'
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+const BASE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  'https://www.gasparlabs.com.br'
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -9,6 +11,7 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/keystatic/', '/api/'],
     },
+
     sitemap: `${BASE_URL}/sitemap.xml`,
   }
 }
