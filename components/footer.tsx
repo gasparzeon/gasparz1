@@ -21,8 +21,8 @@ export function Footer() {
         <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-sm text-slate-300">
-              © {new Date().getFullYear()} Gaspar Labs.
-              Todos os direitos reservados.
+              © {new Date().getFullYear()} Gaspar Labs. Todos os direitos
+              reservados.
             </p>
 
             <p className="mt-1.5 text-xs text-slate-500">
@@ -33,12 +33,10 @@ export function Footer() {
           <div className="flex flex-col items-start gap-3 md:items-end">
             <div className="flex items-center gap-4">
               {socialLinks.map((link) => (
-                <Link>
+                <Link
                   key={link.name}
                   href={link.href}
-                  target={
-                    link.href.startsWith('http') ? '_blank' : undefined
-                  }
+                  target={link.href.startsWith('http') ? '_blank' : undefined}
                   rel={
                     link.href.startsWith('http')
                       ? 'noopener noreferrer'
