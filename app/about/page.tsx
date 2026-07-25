@@ -70,7 +70,7 @@ export default function AboutPage() {
             Gasparzeon
           </Link>
           <Link 
-            href="discord.com/users/1360367947385798810" 
+            href="www.discord.com/users/1360367947385798810" 
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 rounded-md bg-secondary px-4 py-2 text-sm transition-colors hover:bg-secondary/80"
