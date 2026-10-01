@@ -1,0 +1,132 @@
+---
+title: H4CK34NDO AS URNAS!
+excerpt: >-
+  Como a urna eletrônica brasileira funciona por dentro, como ela registra o seu
+  voto e o que mais de uma década de testes públicos de segurança realmente
+  mostrou. Modelos, números e arquitetura das eleições de 2026.
+publishedAt: 2026-10-01
+tags:
+  - urnas
+  - eleicoes
+  - cybersecurity
+  - seguranca
+  - tse
+draft: false
+---
+A eleição é neste domingo, 4 de outubro, e o 2º turno, se houver, será em 25 de outubro. Antes de entrar na discussão, vale entender a máquina. Quem fala de urna sem saber como ela funciona acaba defendendo ou atacando uma coisa que não existe.
+
+## Quantas urnas e quais modelos em 2026
+
+A Justiça Eleitoral vai colocar **563.910 urnas** em operação para atender mais de **158,7 milhões de eleitores** aptos. São quatro modelos em uso:
+
+| Modelo | Quantidade |
+|---|---|
+| UE2022 | 217.145 |
+| UE2020 | 222.323 |
+| UE2015 | 95.065 |
+| UE2013 | 29.377 |
+
+Alguns detalhes que costumam passar batido:
+
+- **Os dois modelos mais novos somam cerca de 77% do total.** A UE2022, fabricada em 2023, é tecnicamente quase idêntica à UE2020, com pequenas diferenças no gabinete e na construção.
+- **A UE2020 foi um salto de desempenho.** Seu poder de processamento é 18 vezes maior que o da UE2015.
+- **Os modelos antigos não são "urnas piores".** Os mais velhos, que representam cerca de um quarto do total, mantêm os recursos de segurança necessários para a integridade do pleito, segundo o TSE.
+- **Por que existem vários modelos?** Para repor aparelhos descartados, o TSE abre licitações com fabricantes, mas os projetos dos modelos pertencem ao próprio tribunal. O hardware é terceirizado, o projeto e o software são do TSE.
+
+## Anatomia da urna
+
+Por fora, são dois terminais: o **terminal do mesário**, onde o eleitor é liberado, e o **terminal do eleitor**, com teclado numérico e tela. A urna também tem uma impressora para os relatórios. Nas gerações mais novas, o terminal do mesário ganhou teclado sensível ao toque.
+
+Por dentro, é um microcomputador de propósito único:
+
+- **Sistema operacional:** um Linux customizado pelo TSE. Segundo o tribunal, ele é preparado para não incluir nenhum mecanismo de software que permita conexão com redes ou acesso remoto.
+- **Sem hardware de rede:** de acordo com o TSE, a urna nem possui o hardware necessário para se conectar a uma rede, com ou sem fio.
+- **Módulo de Segurança Embarcado (MSE):** componente dedicado que aparece na lista de itens atacáveis do teste público de 2025.
+- **Mídias externas:** a urna recebe os dados da eleição (candidatos, eleitores) por mídias de carga e grava o resultado numa mídia de resultado.
+- **Só roda software do TSE:** a urna funciona exclusivamente com programas desenvolvidos pelo tribunal. Tentar executar software não autorizado bloqueia o funcionamento, e o software oficial também não roda em hardware não certificado.
+
+## Antes da eleição: a cadeia de confiança
+
+1. **Abertura do código-fonte.** Cerca de um ano antes da eleição, o TSE abre os códigos-fonte dos sistemas eleitorais para análise.
+2. **Teste Público de Segurança (TPS).** Especialistas de fora tentam quebrar o sistema (veja a seção sobre o TPS mais abaixo).
+3. **Assinatura digital e lacração.** Os softwares são assinados digitalmente e depois lacrados em cerimônia pública na sede do TSE, em Brasília.
+4. **Geração de mídias, carga e lacres físicos.** As urnas recebem programas e dados nos tribunais regionais e ganham lacres físicos. A lacração dos sistemas e a lacração física da urna são etapas distintas.
+5. **Verificação no dia.** Confere-se se os programas instalados são os mesmos que foram oficialmente assinados e lacrados.
+
+O fluxo resumido:
+
+```text
+código-fonte aberto -> TPS -> assinatura digital -> lacração em Brasília
+        -> carga nas urnas + lacres físicos -> verificação no dia
+        -> zerésima -> votação -> BU -> transmissão -> totalização
+```
+
+A lógica é de **assinatura digital em cascata**: tudo o que entra e sai da urna (programas, dados de eleitores e candidatos, arquivos de resultado) é assinado, e a urna recusa o que não bater.
+
+## No dia: da zerésima ao voto
+
+**Zerésima.** Uma hora antes do início da votação, a urna imprime o relatório que prova que não há votos registrados nela. O presidente da mesa, os mesários e os fiscais de partido assinam, e a votação só começa depois dele. O documento fica disponível para consulta durante toda a votação.
+
+**O voto.** O eleitor se identifica, o mesário o libera e ele digita. Em 2026 são seis votos: deputado federal, deputado estadual, duas vagas de senador, governador e presidente.
+
+**Como o voto é gravado.** O voto vai para o **RDV (Registro Digital do Voto)**. Ele registra exatamente o que o eleitor digitou, sem processamento ou informação adicional, e não há como vincular um voto a um eleitor. O RDV só é usado no encerramento, para gerar o boletim de urna e somar os votos.
+
+Dois registros ficam separados: **quem votou** (a lista de comparecimento) e **em quem votou** (o RDV). Os votos são gravados de forma embaralhada, justamente para que a ordem não permita reconstruir quem votou em quem. Esse embaralhamento foi o ponto explorado no TPS de 2012.
+
+## O fim: boletim de urna, transmissão e totalização
+
+Após as 17h, a urna faz a apuração sozinha e imprime o **Boletim de Urna (BU)** em cinco vias, com os votos por candidato e partido, além de nulos e brancos. O BU traz também o total de eleitores aptos, os que votaram e os que faltaram, e o código de identificação da urna.
+
+A geração mais nova incluiu **QR Codes** nos boletins e o aplicativo **Boletim na Mão**. Isso permite que qualquer pessoa confira o papel da seção com o que o TSE publica.
+
+Só depois da apuração, e por equipamento de transmissão separado da urna, o resultado segue adiante. A transmissão é feita por rede de dados criptografados. No TSE, integridade e autenticidade dos arquivos são verificadas antes de começar a totalização, que soma os resultados de todas as urnas.
+
+## Teste de integridade (a antiga "votação paralela")
+
+Na véspera, em cerimônia pública, algumas seções são escolhidas ou sorteadas. A urna daquela seção sai da rota normal e vai para o TRE.
+
+Cédulas de papel são preenchidas e depositadas numa urna de lona. No dia da eleição, os mesmos votos são digitados na urna eletrônica sorteada. O teste segue o rito de uma seção comum, com zerésima e BU, e é acompanhado por uma empresa de auditoria externa. Há público, gravação em vídeo e transmissão ao vivo.
+
+Se o resultado do papel e o da urna divergirem, o sistema falhou. É um teste por amostragem, não uma conferência de todas as urnas.
+
+## O Teste Público de Segurança, edição por edição
+
+O TSE realiza o TPS desde 2009, preferencialmente em anos não eleitorais. O que cada edição mostrou:
+
+- **2009: o radinho de pilha.** O sigilo do voto foi questionado ao se explorar emissões do teclado. A matéria da ConJur discute o episódio.
+- **2012: a mesma chave em todas as urnas.** A equipe de Diego Aranha mostrou uma falha na proteção do embaralhamento que, em tese, permitia quebrar o sigilo do voto. O artigo original foi publicado pelos autores.
+- **2017: alteração de votos em cenário controlado.** O relatório público da própria equipe descreve execução de código na urna. O contexto é de teste, com acesso e liberdade que um atacante real não teria. O TSE corrigiu o que foi apontado.
+- **2018: invasão da rede do TSE.** É o caso real de acesso indevido. O ponto técnico importante é **onde** ocorreu: na infraestrutura do tribunal, e não numa urna em operação nem no resultado dos votos.
+- **2021: cinco falhas.** O TSE reconheceu cinco falhas, mas afirmou que nenhuma alteraria o resultado da eleição.
+- **2025 (8ª edição):** realizada de 1º a 5 de dezembro, na sede do TSE. Foram inscritos 109 planos de teste, dos quais 38 foram aprovados ou aprovados com ressalvas. Os relatórios das comissões concluíram que os achados não comprometem a integridade, o sigilo do voto nem o resultado das eleições, e a Comissão Reguladora relatou que não ficou configurada falha real de segurança.
+
+**Atenção:** as fontes divergem sobre quantos planos foram executados. O TRE-GO fala em seis supostos achados em três de 29 planos executados, e a checagem da Justiça Eleitoral fala em 35 planos previstos e quatro com achados. Se for citar número exato, use o relatório oficial do TSE.
+
+**Como ler isso.** Ter achados num teste controlado não significa que a urna foi invadida. Mas também é verdade que esses testes encontram falhas reais de projeto, que são corrigidas depois. As duas coisas valem ao mesmo tempo.
+
+## O garoto de 11 anos da DEF CON
+
+Circula muito o caso do menino que "hackeou a eleição". Segundo a PBS NewsHour, ele alterou resultados numa **réplica de site estadual da Flórida** em menos de dez minutos. Não era uma urna, e sim um site de divulgação de resultados.
+
+Atacar um site de resultados e atacar o registro do voto são problemas completamente diferentes.
+
+## A crítica técnica séria: independência de software
+
+A crítica mais consistente, defendida por pesquisadores como Diego Aranha (Unicamp), não diz que "a urna é fraudada". Ela diz que a urna brasileira **não tem independência de software**: o resultado depende de confiar que o programa está correto, porque não existe um registro físico independente que o eleitor tenha conferido.
+
+O TSE responde com camadas (assinatura, lacração, teste de integridade, BU conferível, TPS), mas a crítica permanece como discussão de projeto.
+
+## Conclusão
+
+A urna brasileira não é "inhackeável" nem "hackeada o tempo todo". É um sistema fechado, sem rede durante a votação, com várias verificações públicas. É auditável de forma real, mas não por qualquer pessoa sozinha, e depende de confiar nas instituições que fazem a lacração.
+
+A pergunta honesta que sobra é: **quanto de confiança no software o sistema exige, e quanto ele consegue provar sem pedir confiança?**
+
+## Fontes
+
+- TSE e TREs (modelos de urna 2026, TPS 2025, zerésima, boletim de urna)
+- Agência Brasil e TV Senado
+- Justiça Eleitoral, Fato ou Boato (TPS 2025)
+- PBS NewsHour (caso do garoto de 11 anos)
+- Diego F. Aranha (artigo de 2012 e apresentação da Unicamp)
+- ConJur, The Hack, Tecnoblog, Gazeta do Povo, Aos Fatos, Itatiaia
