@@ -1,17 +1,18 @@
-import type { MetadataRoute } from 'next'
+import type { MetadataRoute } from 'next';
 
-const BASE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ||
-  'https://www.gasparlabs.com.br'
+import { resolveSiteUrl } from '@/lib/site/schema';
+import { getSiteSettings } from '@/lib/site/service';
 
-export default function robots(): MetadataRoute.Robots {
+export default async function robots(): Promise<MetadataRoute.Robots> {
+  const baseUrl = resolveSiteUrl(await getSiteSettings());
+
   return {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/keystatic/', '/api/'],
+      disallow: ['/admin', '/api/'],
     },
 
-    sitemap: `${BASE_URL}/sitemap.xml`,
-  }
+    sitemap: `${baseUrl}/sitemap.xml`,
+  };
 }

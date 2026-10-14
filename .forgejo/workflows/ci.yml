@@ -1,0 +1,147 @@
+name: CI
+
+# Forgejo (code.vorn.fun): este arquivo roda no Forgejo Runner. O `runs-on`
+# precisa casar com as labels do runner (aqui: ubuntu-latest → imagem docker
+# com Node). O espelho do GitHub vive em .github/workflows/ci.yml — ao mudar
+# um, mude o outro.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ forgejo.ref }}
+  cancel-in-progress: true
+
+# Sem bloco `permissions:` — o Forgejo não implementa esse campo e o token
+# automático já tem o necessário (igual ao .github/workflows/ci.yml).
+env:
+  NEXT_TELEMETRY_DISABLED: 1
+
+jobs:
+  quality:
+    name: Formatação, lint, tipos, testes e build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Instalar dependências
+        run: pnpm install --frozen-lockfile
+
+      - name: Prettier
+        run: pnpm format:check
+
+      - name: ESLint
+        run: pnpm lint
+
+      - name: TypeScript
+        run: pnpm typecheck
+
+      - name: Testes unitários (Jest + mocks)
+        run: pnpm test:unit --ci --coverage --maxWorkers=2
+
+      - name: Testes de integração (Postgres embutido / PGlite)
+        run: pnpm test:db --ci --coverage --maxWorkers=2
+
+      # Sem DATABASE_URL o build usa PGlite em memória (site vazio, mas
+      # compila todas as rotas).
+      - name: Build
+        run: pnpm build
+
+      # Sem upload de artifact: o protocolo @actions/artifact v2
+      # (upload-artifact@v4+) não é suportado pelo Forgejo
+      # ("not currently supported on GHES") e derrubaria o job no
+      # último passo. A cobertura continua nos flags --coverage acima
+      # e o espelho do GitHub mantém o upload.
+
+  postgres:
+    name: Integração com Postgres 17 (driver de produção)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: gaspar
+        # Sem `ports:`: job e service compartilham a rede do runner e
+        # falam por DNS (`postgres:5432`); publicar 5432 no host só
+        # arriscaria conflito entre runs concorrentes.
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    # No Forgejo Runner os services sobem na mesma rede bridge do job e
+    # são alcançados pelo nome do serviço — `localhost` aqui seria o
+    # próprio container do job (nada escuta 5432 nele). No GitHub o
+    # `localhost` funciona porque as portas do service são publicadas
+    # no host; por isso o espelho .github mantém localhost.
+    env:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/gaspar
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Instalar dependências
+        run: pnpm install --frozen-lockfile
+
+      - name: Aplicar migrações
+        run: pnpm db:migrate
+
+      - name: Migrações são idempotentes
+        run: pnpm db:migrate
+
+      # Um banco compartilhado por todos os arquivos: roda em sequência.
+      - name: Testes de integração
+        run: pnpm test:db --ci --runInBand
+
+  e2e:
+    name: Ponta a ponta (Cypress + axe)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    # A imagem padrão do runner não tem as bibliotecas gráficas que o Cypress
+    # precisa; a oficial dele já traz Node, Chrome e tudo o mais.
+    container:
+      image: cypress/browsers:24.21.0
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10
+
+      - name: Instalar dependências
+        run: pnpm install --frozen-lockfile
+
+      - name: Baixar o Cypress
+        run: pnpm e2e:install
+
+      # Build de produção + servidor isolado (banco em memória, conta de teste)
+      # + Cypress no Chrome (scripts/e2e.mjs). Sem upload das capturas: o
+      # Forgejo não suporta o upload-artifact v4+ (veja o job quality).
+      - name: Testes de ponta a ponta
+        run: pnpm e2e

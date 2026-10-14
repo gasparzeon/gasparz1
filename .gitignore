@@ -9,7 +9,21 @@ __v0_jsx-dev-runtime.ts
 # Environment variables
 .env*.local
 
+# Uploads do /admin no modo local: acompanham o banco local (.data/), que
+# também fica fora do git. Em produção a mídia vai para o Vercel Blob.
+public/uploads/
+
+# Banco local do `pnpm dev` (PGlite)
+.data/
+
+# Saídas do Cypress (pnpm e2e)
+cypress/screenshots/
+cypress/videos/
+cypress/downloads/
+
 # Common ignores
 node_modules
 .next/
+coverage/
+*.tsbuildinfo
 .DS_Store

@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "socials" jsonb DEFAULT '[]'::jsonb NOT NULL;

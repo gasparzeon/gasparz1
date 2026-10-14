@@ -1,0 +1,150 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# Sem bloco `permissions:` — o Forgejo não implementa esse campo
+# (mostra warning "not supported ... will be ignored") e o token
+# automático já tem o necessário. No GitHub o default também atende.
+env:
+  NEXT_TELEMETRY_DISABLED: 1
+
+jobs:
+  quality:
+    name: Formatação, lint, tipos, testes e build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Instalar dependências
+        run: pnpm install --frozen-lockfile
+
+      - name: Prettier
+        run: pnpm format:check
+
+      - name: ESLint
+        run: pnpm lint
+
+      - name: TypeScript
+        run: pnpm typecheck
+
+      - name: Testes unitários (Jest + mocks)
+        run: pnpm test:unit --ci --coverage --maxWorkers=2
+
+      - name: Testes de integração (Postgres embutido / PGlite)
+        run: pnpm test:db --ci --coverage --maxWorkers=2
+
+      # Sem DATABASE_URL o build usa PGlite em memória (site vazio, mas
+      # compila todas as rotas).
+      - name: Build
+        run: pnpm build
+
+      - name: Relatório de cobertura
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 14
+          if-no-files-found: ignore
+
+  postgres:
+    name: Integração com Postgres 17 (driver de produção)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: gaspar
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/gaspar
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Instalar dependências
+        run: pnpm install --frozen-lockfile
+
+      - name: Aplicar migrações
+        run: pnpm db:migrate
+
+      - name: Migrações são idempotentes
+        run: pnpm db:migrate
+
+      # Um banco compartilhado por todos os arquivos: roda em sequência.
+      - name: Testes de integração
+        run: pnpm test:db --ci --runInBand
+
+  e2e:
+    name: Ponta a ponta (Cypress + axe)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Instalar dependências
+        run: pnpm install --frozen-lockfile
+
+      - name: Baixar o Cypress
+        run: pnpm e2e:install
+
+      # Build de produção + servidor isolado (banco em memória, conta de teste)
+      # + Cypress no Chrome (scripts/e2e.mjs).
+      - name: Testes de ponta a ponta
+        run: pnpm e2e
+
+      - name: Capturas das falhas
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: cypress-screenshots
+          path: cypress/screenshots/
+          retention-days: 7
+          if-no-files-found: ignore

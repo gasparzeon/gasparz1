@@ -1,175 +1,125 @@
-import type { Metadata, Viewport } from 'next'
-import { IBM_Plex_Sans, JetBrains_Mono } from 'next/font/google'
-import localFont from 'next/font/local'
-import { Analytics } from '@vercel/analytics/next'
+import type { Metadata, Viewport } from 'next';
+import { Atkinson_Hyperlegible_Mono, Atkinson_Hyperlegible_Next } from 'next/font/google';
+import { Analytics } from '@vercel/analytics/next';
 
-import { ThemeProvider } from '@/components/theme-provider'
-import { Header } from '@/components/header'
-import { Footer } from '@/components/footer'
-import { SearchWrapper } from '@/components/search-wrapper'
-import { PlausibleAnalytics } from '@/components/plausible-analytics'
+import { ThemeProvider } from '@/components/theme-provider';
+import { Header } from '@/components/header';
+import { Footer } from '@/components/footer';
+import { SearchWrapper } from '@/components/search-wrapper';
+import { PlausibleAnalytics } from '@/components/plausible-analytics';
+import { HideOnAdmin } from '@/components/hide-on-admin';
+import { MotionRoot } from '@/components/site/motion-root';
+import { SiteMain } from '@/components/site/site-main';
+import { getAllPosts } from '@/lib/content';
+import { MOTION_BOOT_SCRIPT } from '@/lib/motion/preference';
+import { sectionCounts } from '@/lib/posts-view';
+import { resolveSiteUrl } from '@/lib/site/schema';
+import { getSiteSettings } from '@/lib/site/service';
 
-import './globals.css'
+import 'katex/dist/katex.min.css';
+import './globals.css';
+import './site.css';
 
-const satoshi = localFont({
-  src: [
-    {
-      path: '../public/fonts/Satoshi-Regular.woff2',
-      weight: '400',
-      style: 'normal',
-    },
-    {
-      path: '../public/fonts/Satoshi-Medium.woff2',
-      weight: '500',
-      style: 'normal',
-    },
-    {
-      path: '../public/fonts/Satoshi-Bold.woff2',
-      weight: '700',
-      style: 'normal',
-    },
-    {
-      path: '../public/fonts/Satoshi-Black.woff2',
-      weight: '900',
-      style: 'normal',
-    },
-  ],
-  variable: '--font-satoshi',
+// Atkinson Hyperlegible (Braille Institute): feita para leitura com baixa visão.
+// O Next não tem as métricas dessas fontes para gerar o fallback ajustado (e
+// avisa a cada compilação); usamos fallbacks do sistema declarados aqui.
+const atkinson = Atkinson_Hyperlegible_Next({
+  subsets: ['latin', 'latin-ext'],
+  variable: '--font-atkinson',
   display: 'swap',
-})
+  adjustFontFallback: false,
+  fallback: ['system-ui', 'Segoe UI', 'Roboto', 'Arial', 'sans-serif'],
+});
 
-const ibmPlexSans = IBM_Plex_Sans({
-  subsets: ['latin'],
-  weight: ['400', '500', '600'],
-  variable: '--font-ibm-plex',
+const atkinsonMono = Atkinson_Hyperlegible_Mono({
+  subsets: ['latin', 'latin-ext'],
+  variable: '--font-atkinson-mono',
   display: 'swap',
-})
+  adjustFontFallback: false,
+  fallback: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace'],
+});
 
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ['latin'],
-  weight: ['400', '500'],
-  variable: '--font-jetbrains',
-  display: 'swap',
-})
+// Título, descrição, prévias de links e integrações vêm do painel (/admin/site).
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSiteSettings();
+  const { name, description, author, keywords, shareImage } = settings.general;
+  const images = shareImage ? [shareImage] : undefined;
 
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ||
-  'https://gaspar-blog.vercel.app'
-
-export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
-
-  title: {
-    default: 'Gaspar Labs',
-    template: '%s | Gaspar Labs',
-  },
-
-  description:
-    'Research, systems, cybersecurity, IA e underground web.',
-
-  keywords: [
-    'gaspar labs',
-    'desenvolvimento',
-    'programacao',
-    'software',
-    'tecnologia',
-    'arquitetura',
-    'sistemas',
-    'cybersecurity',
-    'hacking',
-    'ia',
-    'internet',
-  ],
-
-  authors: [{ name: 'Gaspar' }],
-  creator: 'Gaspar',
-
-  icons: {
-    icon: '/icon.png',
-    shortcut: '/icon.png',
-    apple: '/icon.png',
-  },
-
-  openGraph: {
-    type: 'website',
-    locale: 'pt_BR',
-    url: siteUrl,
-    siteName: 'Gaspar Labs',
-    title: 'Gaspar Labs',
-    description:
-      'Research, systems, cybersecurity, IA e underground web.',
-    images: [
-      {
-        url: '/icon.png',
-        width: 512,
-        height: 512,
-        alt: 'Gaspar Labs',
-      },
-    ],
-  },
-
-  twitter: {
-    card: 'summary',
-    title: 'Gaspar Labs',
-    description:
-      'Research, systems, cybersecurity, IA e underground web.',
-    images: ['/icon.png'],
-  },
-
-  robots: {
-    index: true,
-    follow: true,
-  },
+  return {
+    metadataBase: new URL(resolveSiteUrl(settings)),
+    title: { default: name, template: `%s | ${name}` },
+    description: description || undefined,
+    keywords,
+    authors: author ? [{ name: author }] : undefined,
+    creator: author || undefined,
+    icons: { icon: '/icon.png', shortcut: '/icon.png', apple: '/icon.png' },
+    openGraph: {
+      type: 'website',
+      locale: 'pt_BR',
+      url: '/',
+      siteName: name,
+      title: name,
+      description: description || undefined,
+      images,
+    },
+    twitter: { card: 'summary', title: name, description: description || undefined, images },
+    alternates: { types: { 'application/rss+xml': [{ url: '/rss.xml', title: name }] } },
+    robots: { index: true, follow: true },
+  };
 }
 
 export const viewport: Viewport = {
-  themeColor: [
-    {
-      media: '(prefers-color-scheme: dark)',
-      color: '#08090b',
-    },
-    {
-      media: '(prefers-color-scheme: light)',
-      color: '#fafafa',
-    },
-  ],
+  themeColor: '#080a08',
   width: 'device-width',
   initialScale: 1,
-}
+};
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
+  const [settings, posts] = await Promise.all([getSiteSettings(), getAllPosts()]);
+  const { plausible, vercelAnalytics } = settings.integrations;
+
   return (
     <html
       lang="pt-BR"
       suppressHydrationWarning
-      className={`${satoshi.variable} ${ibmPlexSans.variable} ${jetbrainsMono.variable}`}
+      data-scroll-behavior="smooth"
+      className={`${atkinson.variable} ${atkinsonMono.variable}`}
     >
-      <body className="min-h-screen font-sans antialiased flex flex-col">
+      <body className="flex min-h-screen flex-col font-sans antialiased">
+        {/* Preferência de animações antes da pintura (lib/motion/preference.ts). */}
+        <script dangerouslySetInnerHTML={{ __html: MOTION_BOOT_SCRIPT }} />
+        {/* Escuro é o padrão; o leitor pode trocar para o claro (fica salvo). */}
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
           enableSystem={false}
           disableTransitionOnChange
         >
-          <Header />
+          <HideOnAdmin>
+            <Header navigation={settings.navigation} sectionCounts={sectionCounts(posts)} />
+          </HideOnAdmin>
 
-          <main className="flex-1">{children}</main>
+          <SiteMain>{children}</SiteMain>
 
-          <Footer />
-
-          <SearchWrapper />
+          <HideOnAdmin>
+            <Footer settings={settings} />
+            {settings.navigation.showSearch && <SearchWrapper />}
+            <MotionRoot />
+          </HideOnAdmin>
         </ThemeProvider>
 
-        {process.env.NODE_ENV === 'production' && <Analytics />}
+        {/* O script do Vercel Analytics só existe em deploys na Vercel. */}
+        {vercelAnalytics.enabled && process.env.VERCEL && <Analytics />}
 
         <PlausibleAnalytics
-          domain={process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN}
+          domain={plausible.enabled ? plausible.domain : undefined}
+          src={plausible.scriptUrl}
         />
       </body>
     </html>
-  )
+  );
 }

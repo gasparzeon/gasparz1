@@ -1,2 +1,11 @@
+# Scripts de instalação ficam desligados (o pnpm 11+ bloqueia por padrão e
+# falha o install se algum pacote não estiver decidido aqui). Estes pacotes
+# trazem binários prontos por plataforma e funcionam sem os scripts.
 allowBuilds:
+  # O binário do Cypress (~500 MB) só é baixado por quem roda os testes de
+  # ponta a ponta: `pnpm e2e:install` (cypress install).
+  cypress: false
   sharp: false
+  esbuild: false
+  '@parcel/watcher': false
+  unrs-resolver: false

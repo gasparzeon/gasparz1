@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* 1600×800 (2:1): a mesma proporção em que a página do post mostra a capa. */
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      body {
+        width: 1600px;
+        height: 800px;
+        background: #050506;
+        color: #f4f4f5;
+        font-family: 'Space Grotesk', system-ui, sans-serif;
+        overflow: hidden;
+        position: relative;
+      }
+      .grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(to right, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+        background-size: 64px 64px;
+        mask-image: radial-gradient(ellipse at 70% 45%, black 10%, transparent 75%);
+      }
+      .glow {
+        position: absolute;
+        width: 900px;
+        height: 900px;
+        right: -180px;
+        top: -200px;
+        background: radial-gradient(circle, rgba(56, 189, 248, 0.18), transparent 60%);
+        filter: blur(20px);
+      }
+      .glow2 {
+        position: absolute;
+        width: 700px;
+        height: 700px;
+        left: 420px;
+        bottom: -420px;
+        background: radial-gradient(circle, rgba(52, 211, 153, 0.14), transparent 60%);
+        filter: blur(20px);
+      }
+      .wrap {
+        position: relative;
+        padding: 80px 104px 72px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+      .kicker {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 22px;
+        letter-spacing: 0.28em;
+        color: #a1a1aa;
+        text-transform: uppercase;
+      }
+      .kicker b {
+        color: #38bdf8;
+        font-weight: 600;
+      }
+      h1 {
+        margin-top: 36px;
+        font-size: 96px;
+        line-height: 0.98;
+        letter-spacing: -0.045em;
+        font-weight: 700;
+        max-width: 900px;
+      }
+      h1 .dim {
+        color: #71717a;
+      }
+      .sub {
+        margin-top: 30px;
+        font-size: 32px;
+        color: #a1a1aa;
+        max-width: 820px;
+        line-height: 1.35;
+      }
+      .cards {
+        position: absolute;
+        right: 104px;
+        top: 128px;
+        display: flex;
+        flex-direction: column;
+        gap: 26px;
+        width: 520px;
+      }
+      .card {
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(24, 24, 27, 0.72);
+        border-radius: 22px;
+        padding: 28px 30px;
+        backdrop-filter: blur(8px);
+      }
+      .card .name {
+        font-size: 34px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+      }
+      .card .name small {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 18px;
+        color: #a1a1aa;
+        font-weight: 400;
+      }
+      .card .meta {
+        margin-top: 10px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 19px;
+        color: #a1a1aa;
+      }
+      .card .meta em {
+        font-style: normal;
+        color: #34d399;
+      }
+      .bar {
+        margin-top: 18px;
+        height: 14px;
+        border-radius: 99px;
+        background: rgba(255, 255, 255, 0.07);
+        overflow: hidden;
+      }
+      .bar i {
+        display: block;
+        height: 100%;
+        border-radius: 99px;
+      }
+      .scale {
+        margin-top: 8px;
+        display: flex;
+        justify-content: space-between;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 15px;
+        color: #71717a;
+      }
+      .foot {
+        margin-top: auto;
+        display: flex;
+        gap: 18px;
+        align-items: center;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 22px;
+        color: #a1a1aa;
+      }
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #34d399;
+        box-shadow: 0 0 18px #34d399;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="grid"></div>
+    <div class="glow"></div>
+    <div class="glow2"></div>
+    <div class="wrap">
+      <p class="kicker" id="kicker"></p>
+      <h1 id="title"></h1>
+      <p class="sub" id="sub"></p>
+      <div class="foot" id="foot"></div>
+    </div>
+    <div class="cards" id="cards"></div>
+    <script>
+      // window.COVER = {
+      //   kicker: ['destaque', 'resto'], title: [{ text, dim? }, ...] (uma linha cada),
+      //   sub, foot,
+      //   cards: [{ name, source, meta, bar: 0-100, color: 'bonsai'|'qwen'|'ref', left, right }]
+      // }
+      // Em `meta`, o trecho entre [[ ]] sai destacado em verde.
+      const COLORS = {
+        bonsai: 'linear-gradient(90deg, #34d399, #38bdf8)',
+        qwen: 'linear-gradient(90deg, #38bdf8, #818cf8)',
+        ref: 'repeating-linear-gradient(45deg, #3f3f46 0 10px, #27272a 10px 20px)',
+      };
+      const el = (tag, className, text) => {
+        const node = document.createElement(tag);
+        if (className) node.className = className;
+        if (text !== undefined) node.textContent = text;
+        return node;
+      };
+      window.draw = () => {
+        const c = window.COVER;
+        const kicker = document.getElementById('kicker');
+        kicker.replaceChildren(el('b', '', c.kicker[0]), ` · ${c.kicker[1]}`);
+        const title = document.getElementById('title');
+        title.replaceChildren();
+        c.title.forEach((line, index) => {
+          if (index) title.append(el('br'));
+          title.append(line.dim ? el('span', 'dim', line.text) : line.text);
+        });
+        document.getElementById('sub').textContent = c.sub;
+        document.getElementById('foot').replaceChildren(el('span', 'dot'), ` ${c.foot}`);
+        document.getElementById('cards').replaceChildren(
+          ...c.cards.map((card) => {
+            const box = el('div', 'card');
+            const name = el('div', 'name', card.name);
+            name.append(el('small', '', card.source));
+            const meta = el('div', 'meta');
+            card.meta.split(/(\[\[.*?\]\])/).forEach((part) => {
+              meta.append(part.startsWith('[[') ? el('em', '', part.slice(2, -2)) : part);
+            });
+            const bar = el('div', 'bar');
+            const fill = el('i');
+            fill.style.width = `${card.bar}%`;
+            fill.style.background = COLORS[card.color] ?? COLORS.qwen;
+            bar.append(fill);
+            const scale = el('div', 'scale');
+            scale.append(el('span', '', card.left), el('span', '', card.right));
+            box.append(name, meta, bar, scale);
+            return box;
+          }),
+        );
+      };
+    </script>
+  </body>
+</html>

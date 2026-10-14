@@ -1,0 +1,16 @@
+{
+  "slug": "llm-local-em-casa-bonsai-2-qwen-3-5-9b",
+  "title": "LLM local em casa: Bonsai 2 e Qwen 3.5 9B num Mac mini de 16 GB",
+  "excerpt": "Medi num Mac mini M4 de 16 GB quanto ocupam e quão rápido rodam o Qwen 3.5 9B e o Bonsai ternário de 27B — e por que o modo \"pensando\" transforma 16 segundos em quase dois minutos.",
+  "tags": ["llm", "ia-local", "qwen", "bonsai", "mac"],
+  "capa": "capa-llm-local.png",
+  "conteudo": "post.md",
+  "midia": [
+    "capa-llm-local.png",
+    "grafico-memoria.png",
+    "grafico-velocidade.png",
+    "grafico-raciocinio.png",
+    "qwen-tempo-real.mp4",
+    "bonsai-tempo-real.mp4"
+  ]
+}

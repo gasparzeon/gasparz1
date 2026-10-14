@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      body {
+        width: 1600px;
+        background: #050506;
+        color: #f4f4f5;
+        font-family: 'Space Grotesk', system-ui, sans-serif;
+      }
+      .card {
+        padding: 72px 80px 56px;
+        position: relative;
+        overflow: hidden;
+      }
+      .card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+        background-size: 64px 64px;
+        mask-image: radial-gradient(ellipse at 80% 0%, black, transparent 70%);
+        pointer-events: none;
+      }
+      .kicker {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 20px;
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+        color: #38bdf8;
+      }
+      h1 {
+        margin-top: 14px;
+        font-size: 54px;
+        letter-spacing: -0.035em;
+        line-height: 1.05;
+        max-width: 1300px;
+      }
+      .sub {
+        margin-top: 14px;
+        font-size: 25px;
+        color: #a1a1aa;
+        max-width: 1300px;
+        line-height: 1.4;
+      }
+      .rows {
+        margin-top: 52px;
+        display: flex;
+        flex-direction: column;
+        gap: 26px;
+        position: relative;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 430px 1fr;
+        align-items: center;
+        gap: 28px;
+      }
+      .label {
+        font-size: 24px;
+        line-height: 1.25;
+      }
+      .label small {
+        display: block;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 16px;
+        color: #71717a;
+        margin-top: 4px;
+      }
+      .track {
+        position: relative;
+        height: 46px;
+      }
+      .bar {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+      }
+      .value {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 22px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .marker {
+        position: absolute;
+        top: -18px;
+        bottom: -18px;
+        border-left: 2px dashed rgba(251, 191, 36, 0.75);
+      }
+      .marker span {
+        position: absolute;
+        top: -34px;
+        left: 8px;
+        white-space: nowrap;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 17px;
+        color: #fbbf24;
+      }
+      .legend {
+        margin-top: 40px;
+        display: flex;
+        gap: 32px;
+        flex-wrap: wrap;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 17px;
+        color: #a1a1aa;
+      }
+      .legend i {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border-radius: 4px;
+        vertical-align: -2px;
+        margin-right: 10px;
+      }
+      .foot {
+        margin-top: 34px;
+        padding-top: 22px;
+        border-top: 1px solid #1f1f23;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 16px;
+        color: #71717a;
+        line-height: 1.6;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card" id="card">
+      <p class="kicker" id="kicker"></p>
+      <h1 id="title"></h1>
+      <p class="sub" id="sub"></p>
+      <div class="rows" id="rows"></div>
+      <div class="legend" id="legend"></div>
+      <p class="foot" id="foot"></p>
+    </div>
+    <script>
+      // window.CHART = { kicker, title, sub, max, unit, decimals, marker: {value, label},
+      //   rows: [{label, note, value, color, valueLabel?}], legend: [{label, color}], foot }
+      window.draw = () => {
+        const c = window.CHART;
+        const fmt = (n) =>
+          n.toLocaleString('pt-BR', {
+            minimumFractionDigits: c.decimals ?? 1,
+            maximumFractionDigits: c.decimals ?? 1,
+          });
+        document.getElementById('kicker').textContent = c.kicker;
+        document.getElementById('title').textContent = c.title;
+        document.getElementById('sub').textContent = c.sub ?? '';
+        document.getElementById('foot').innerHTML = c.foot ?? '';
+        const rows = document.getElementById('rows');
+        rows.innerHTML = '';
+        for (const r of c.rows) {
+          const row = document.createElement('div');
+          row.className = 'row';
+          const pct = Math.max(0.6, (r.value / c.max) * 100);
+          row.innerHTML = `<div class="label">${r.label}${r.note ? `<small>${r.note}</small>` : ''}</div>
+        <div class="track"><div class="bar" style="width:${pct}%; background:${r.color}"></div>
+        <span class="value" style="left: calc(${pct}% + 16px)">${r.valueLabel ?? fmt(r.value) + ' ' + c.unit}</span></div>`;
+          rows.append(row);
+        }
+        if (c.marker) {
+          const track = rows.querySelector('.track');
+          const left = track.getBoundingClientRect().left - rows.getBoundingClientRect().left;
+          const width = track.getBoundingClientRect().width;
+          const m = document.createElement('div');
+          m.className = 'marker';
+          m.style.left = `${left + (c.marker.value / c.max) * width}px`;
+          m.innerHTML = `<span>${c.marker.label}</span>`;
+          rows.append(m);
+        }
+        document.getElementById('legend').innerHTML = (c.legend ?? [])
+          .map((l) => `<span><i style="background:${l.color}"></i>${l.label}</span>`)
+          .join('');
+      };
+    </script>
+  </body>
+</html>

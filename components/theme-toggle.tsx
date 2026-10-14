@@ -1,39 +1,24 @@
-'use client'
+'use client';
 
-import * as React from 'react'
-import { Moon, Sun } from 'lucide-react'
-import { useTheme } from 'next-themes'
-import { Button } from '@/components/ui/button'
+import { Moon, Sun } from 'lucide-react';
+import { useTheme } from 'next-themes';
 
+// Os dois ícones vêm no HTML e o CSS mostra o certo (o next-themes coloca a
+// classe .dark/.light no <html> antes da hidratação). Servidor e cliente
+// renderizam exatamente o mesmo HTML.
 export function ThemeToggle() {
-  const { setTheme, resolvedTheme } = useTheme()
-  const [mounted, setMounted] = React.useState(false)
-
-  React.useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  if (!mounted) {
-    return (
-      <Button variant="ghost" size="icon" className="h-9 w-9" disabled>
-        <span className="sr-only">Alternar tema</span>
-      </Button>
-    )
-  }
+  const { setTheme, resolvedTheme } = useTheme();
 
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      className="h-9 w-9"
-      onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+    <button
+      type="button"
+      className="gz-btn gz-btn--ghost gz-btn--icon gz-btn--sm"
+      onClick={() => setTheme(resolvedTheme === 'light' ? 'dark' : 'light')}
+      title="Alternar entre tema escuro e claro"
     >
-      {resolvedTheme === 'dark' ? (
-        <Sun className="h-4 w-4" />
-      ) : (
-        <Moon className="h-4 w-4" />
-      )}
-      <span className="sr-only">Alternar tema</span>
-    </Button>
-  )
+      <Sun className="gz-ico hidden dark:block" aria-hidden="true" />
+      <Moon className="gz-ico dark:hidden" aria-hidden="true" />
+      <span className="gz-sr">Alternar tema</span>
+    </button>
+  );
 }

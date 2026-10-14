@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "readme" text DEFAULT '' NOT NULL;

@@ -1,18 +1,18 @@
 export function formatDate(date: string | Date | null | undefined) {
-  if (!date) return ''
+  if (!date) return '';
 
-  const parsedDate =
-    date instanceof Date
-      ? date
-      : new Date(date)
+  const parsedDate = date instanceof Date ? date : new Date(date);
 
   if (Number.isNaN(parsedDate.getTime())) {
-    return ''
+    return '';
   }
 
+  // Datas do frontmatter (AAAA-MM-DD) são interpretadas como meia-noite
+  // UTC; formatar em UTC evita mostrar o dia anterior em fusos negativos.
   return new Intl.DateTimeFormat('pt-BR', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
-  }).format(parsedDate)
+    timeZone: 'UTC',
+  }).format(parsedDate);
 }

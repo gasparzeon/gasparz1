@@ -1,23 +1,42 @@
-import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
+import Link from 'next/link';
+import { ArrowLeft, Search } from 'lucide-react';
 
-export default function NotFound() {
+import { getSiteSettings } from '@/lib/site/service';
+
+// Textos editáveis em /admin/site → Página 404.
+export default async function NotFound() {
+  const { notFound } = await getSiteSettings();
+
   return (
-    <div className="container mx-auto flex max-w-4xl flex-col items-center justify-center px-4 py-32 text-center">
-      <h1 className="mb-4 text-6xl font-bold">404</h1>
-      <p className="mb-8 text-xl text-muted-foreground">
-        Pagina nao encontrada
-      </p>
-      <p className="mb-8 max-w-md text-muted-foreground">
-        A pagina que voce esta procurando nao existe ou foi movida para outro endereco.
-      </p>
-      <Link
-        href="/"
-        className="inline-flex items-center gap-2 rounded-md bg-foreground px-4 py-2 text-sm text-background transition-colors hover:bg-foreground/90"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Voltar para o inicio
-      </Link>
+    <div className="gz-root">
+      <div className="gz-wrap" style={{ paddingBlock: '5rem 6rem' }}>
+        <div className="gz-status">
+          <span className="gz-live">
+            <span className="gz-dot" aria-hidden="true" />
+            erro 404
+          </span>
+          <span>registro não encontrado no arquivo</span>
+        </div>
+        <div className="grid max-w-3xl gap-6 pt-10">
+          <p className="gz-bignum" aria-hidden="true">
+            <span>404</span>
+          </p>
+          <h1 className="gz-h1" data-gz-scramble="intro">
+            {notFound.title}
+          </h1>
+          {notFound.text && <p className="gz-lead">{notFound.text}</p>}
+          <div className="flex flex-wrap gap-2">
+            <Link href="/" className="gz-btn gz-btn--primary">
+              <ArrowLeft className="gz-ico" aria-hidden="true" />
+              {notFound.buttonLabel || 'Voltar'}
+            </Link>
+            <Link href="/posts" className="gz-btn">
+              <Search className="gz-ico" aria-hidden="true" />
+              Procurar no arquivo
+            </Link>
+          </div>
+        </div>
+      </div>
     </div>
-  )
+  );
 }

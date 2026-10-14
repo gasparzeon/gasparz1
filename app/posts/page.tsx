@@ -1,70 +1,55 @@
-import type { Metadata } from 'next'
-import { getAllPosts, getAllTags } from '@/lib/content'
-import { PostCard } from '@/components/post-card'
-import { TagFilter } from '@/components/tag-filter'
+import type { Metadata } from 'next';
 
-export const metadata: Metadata = {
-  title: 'Posts',
-  description: 'Todos os posts publicados.',
+import { getAllPosts } from '@/lib/content';
+import { getSiteSettings } from '@/lib/site/service';
+import { isSectionKey } from '@/lib/sections';
+import { registryNumbers } from '@/lib/posts-view';
+import { ArchiveBrowser } from '@/components/site/archive-browser';
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { postsPage } = await getSiteSettings();
+  return { title: postsPage.title, description: postsPage.description || undefined };
 }
+
+type Param = string | string[] | undefined;
 
 interface PostsPageProps {
-  searchParams: Promise<{
-    tag?: string
-  }>
+  // ?q= busca, ?secao= seção, ?tag= etiqueta, ?ordem=antigos
+  searchParams: Promise<{ q?: Param; secao?: Param; tag?: Param; ordem?: Param }>;
 }
 
-export default async function PostsPage({
-  searchParams,
-}: PostsPageProps) {
-  const params = await searchParams
+const single = (value: Param) => (typeof value === 'string' ? value : '');
 
-  const posts = await getAllPosts()
-  const allTags = await getAllTags()
-
-  const filteredPosts = params.tag
-    ? posts.filter((post) =>
-        post.tags.includes(params.tag!)
-      )
-    : posts
+export default async function PostsPage({ searchParams }: PostsPageProps) {
+  const params = await searchParams;
+  const [posts, settings] = await Promise.all([getAllPosts(), getSiteSettings()]);
+  const numbers = registryNumbers(posts);
+  const section = single(params.secao);
+  const initial = {
+    q: single(params.q).slice(0, 100),
+    section: isSectionKey(section) ? section : ('all' as const),
+    tag: single(params.tag).slice(0, 40),
+    order: single(params.ordem) === 'antigos' ? ('asc' as const) : ('desc' as const),
+  };
 
   return (
-    <main className="container mx-auto max-w-4xl px-4 py-16">
-      <header className="mb-12">
-        <h1 className="mb-4">Posts</h1>
-
-        <p className="text-lg text-muted-foreground">
-          {filteredPosts.length}{' '}
-          {filteredPosts.length === 1
-            ? 'post publicado'
-            : 'posts publicados'}
-        </p>
-      </header>
-
-      {allTags.length > 0 && (
-        <TagFilter
-          tags={allTags}
-          activeTag={params.tag}
-          className="mb-8"
-        />
-      )}
-
-      {filteredPosts.length > 0 ? (
-        <div className="flex flex-col gap-6">
-          {filteredPosts.map((post) => (
-            <PostCard
-              key={post.slug}
-              post={post}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="rounded-lg border border-border bg-card p-8 text-center">
-          <p className="text-muted-foreground">
-            Nenhum post publicado ainda.
-          </p>
-        </div>
-      )}
-    </main>
-  )
+    <ArchiveBrowser
+      // Um link do menu para outra seção remonta a busca com os novos filtros.
+      key={JSON.stringify(initial)}
+      posts={posts.map((post) => ({
+        slug: post.slug,
+        title: post.title,
+        excerpt: post.excerpt,
+        publishedAt: post.publishedAt,
+        readingTime: post.readingTime,
+        section: post.section,
+        coverImage: post.coverImage,
+        tags: post.tags,
+        number: numbers.get(post.slug) ?? '',
+      }))}
+      initial={initial}
+      title={settings.postsPage.title}
+      description={settings.postsPage.description}
+    />
+  );
 }

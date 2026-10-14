@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      body {
+        width: 1280px;
+        height: 720px;
+        background: #050506;
+        font-family: 'JetBrains Mono', monospace;
+        color: #e4e4e7;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+      .win {
+        width: 1200px;
+        height: 660px;
+        border-radius: 16px;
+        border: 1px solid #27272a;
+        background: #0b0b0d;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .bar {
+        height: 44px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 16px;
+        border-bottom: 1px solid #1f1f23;
+        background: #111114;
+      }
+      .bar i {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+      .bar .title {
+        margin-left: 14px;
+        font-size: 14px;
+        color: #a1a1aa;
+      }
+      .bar .badge {
+        margin-left: auto;
+        font-size: 12px;
+        color: #34d399;
+        border: 1px solid rgba(52, 211, 153, 0.35);
+        border-radius: 99px;
+        padding: 3px 10px;
+      }
+      .body {
+        flex: 1;
+        padding: 22px 26px;
+        font-size: 17px;
+        line-height: 1.6;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      .prompt {
+        color: #38bdf8;
+      }
+      .prompt b {
+        color: #71717a;
+        font-weight: 400;
+      }
+      .thinking {
+        margin-top: 14px;
+        color: #71717a;
+        font-size: 15px;
+      }
+      .thinking .tail {
+        display: block;
+        margin-top: 6px;
+        color: #52525b;
+        white-space: pre-wrap;
+        max-height: 76px;
+        overflow: hidden;
+      }
+      .answer {
+        margin-top: 14px;
+        white-space: pre-wrap;
+        color: #f4f4f5;
+        flex: 1;
+        overflow: hidden;
+      }
+      .answer .inner {
+      }
+      .cursor {
+        display: inline-block;
+        width: 10px;
+        height: 20px;
+        background: #f4f4f5;
+        vertical-align: -3px;
+        margin-left: 2px;
+      }
+      .status {
+        height: 40px;
+        border-top: 1px solid #1f1f23;
+        display: flex;
+        align-items: center;
+        gap: 28px;
+        padding: 0 22px;
+        font-size: 13px;
+        color: #a1a1aa;
+        background: #0e0e11;
+      }
+      .status b {
+        color: #f4f4f5;
+        font-weight: 600;
+      }
+      .status .live {
+        margin-left: auto;
+        color: #34d399;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="win">
+      <div class="bar">
+        <i style="background: #ff5f57"></i><i style="background: #febc2e"></i
+        ><i style="background: #28c840"></i>
+        <span class="title" id="title"></span>
+        <span class="badge">offline · tempo real</span>
+      </div>
+      <div class="body">
+        <div class="prompt"><b>você ›</b> <span id="prompt"></span></div>
+        <div class="thinking" id="thinking"></div>
+        <div class="answer"><div class="inner" id="answer"></div></div>
+      </div>
+      <div class="status">
+        <span>tokens <b id="tokens">0</b></span>
+        <span>velocidade <b id="speed">—</b></span>
+        <span>tempo <b id="clock">0,0 s</b></span>
+        <span class="live" id="live">● gerando</span>
+      </div>
+    </div>
+    <script>
+      // window.DATA = { title, prompt, events: [{t, kind, text}], tokensPerEvent }
+      const $ = (id) => document.getElementById(id);
+      const fmt = (n, d = 1) =>
+        n.toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
+      window.render = (t) => {
+        const { events, title, prompt, done } = window.DATA;
+        $('title').textContent = title;
+        $('prompt').textContent = prompt;
+        const shown = events.filter((e) => e.t <= t);
+        const reasoning = shown.filter((e) => e.kind === 'reasoning');
+        const content = shown.filter((e) => e.kind === 'content');
+        const first = events[0]?.t ?? 0;
+        const tokens = shown.length;
+        const elapsed = Math.max(0, Math.min(t, done));
+        $('tokens').textContent = tokens.toLocaleString('pt-BR');
+        $('speed').textContent =
+          tokens > 5 && elapsed > first ? fmt(tokens / (elapsed - first)) + ' tok/s' : '—';
+        $('clock').textContent = fmt(elapsed) + ' s';
+        if (reasoning.length) {
+          const text = reasoning.map((e) => e.text).join('');
+          const thinkingDone = content.length > 0;
+          $('thinking').innerHTML =
+            (thinkingDone ? '✓ pensou por ' : '◌ pensando… ') +
+            reasoning.length.toLocaleString('pt-BR') +
+            ' tokens' +
+            (thinkingDone ? '' : '<span class="tail"></span>');
+          const tail = $('thinking').querySelector('.tail');
+          if (tail) tail.textContent = text.slice(-260);
+        } else {
+          // Sem raciocínio: o aviso só aparece até o primeiro token chegar.
+          $('thinking').textContent = content.length ? '' : t > 0 ? '◌ lendo o pedido…' : '';
+          $('thinking').style.display = content.length ? 'none' : '';
+        }
+        const answer = content.map((e) => e.text).join('');
+        const finished = t >= done;
+        $('answer').innerHTML = '';
+        $('answer').append(document.createTextNode(answer));
+        if (!finished && content.length) {
+          const c = document.createElement('span');
+          c.className = 'cursor';
+          $('answer').append(c);
+        }
+        $('live').textContent = finished ? '✓ concluído' : '● gerando';
+        const box = $('answer').parentElement;
+        box.scrollTop = box.scrollHeight;
+      };
+    </script>
+  </body>
+</html>

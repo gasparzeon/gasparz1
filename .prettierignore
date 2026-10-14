@@ -1,0 +1,15 @@
+.next
+node_modules
+coverage
+public
+pnpm-lock.yaml
+package-lock.json
+next-env.d.ts
+# Store do pnpm quando instalado dentro do workspace (ex.: CI isolado):
+# blobs content-addressable que o Prettier não deve varrer.
+.pnpm-store
+
+# Conteúdo editorial: o Prettier reescreveria listas, ênfases e tabelas dos posts.
+content
+*.md
+*.mdx

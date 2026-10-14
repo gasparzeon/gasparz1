@@ -1,0 +1,147 @@
+{
+  "capa": {
+    "arquivo": "capa-llm-local.png",
+    "kicker": ["LLM local", "teste na prática"],
+    "title": [
+      { "text": "IA de verdade" },
+      { "text": "dentro de um", "dim": true },
+      { "text": "Mac mini" }
+    ],
+    "sub": "Bonsai 2 27B e Qwen 3.5 9B: o que cabe, quanto ocupa e quão rápido roda em 16 GB de memória.",
+    "foot": "sem nuvem · sem assinatura · offline",
+    "cards": [
+      {
+        "name": "Bonsai 2 27B",
+        "source": "PrismML",
+        "meta": "ternário [[{−1, 0, +1}]] · 1,72 bit/peso",
+        "bar": 53.75,
+        "color": "bonsai",
+        "left": "8,60 GB (MLX)",
+        "right": "de 16 GB"
+      },
+      {
+        "name": "Qwen 3.5 9B",
+        "source": "Alibaba",
+        "meta": "4 bits · contexto de 262K tokens",
+        "bar": 37.2,
+        "color": "qwen",
+        "left": "5,95 GB (MLX 4-bit)",
+        "right": "de 16 GB"
+      },
+      {
+        "name": "O mesmo 27B em FP16",
+        "source": "referência",
+        "meta": "~54 GB · não cabe em máquina doméstica",
+        "bar": 100,
+        "color": "ref",
+        "left": "~54 GB",
+        "right": "3,4× a memória do Mac"
+      }
+    ]
+  },
+  "graficos": [
+    {
+      "arquivo": "grafico-memoria.png",
+      "kicker": "Tamanho em disco",
+      "title": "Quanto cada modelo ocupa",
+      "sub": "Comprimido, um modelo de 27 bilhões de parâmetros cabe com folga nos 16 GB de um Mac mini.",
+      "max": 62,
+      "unit": "GB",
+      "decimals": 2,
+      "marker": { "value": 16, "label": "16 GB do Mac mini" },
+      "rows": [
+        {
+          "label": "Qwen3.8-27B em 16 bits",
+          "note": "referência · dado da PrismML",
+          "value": 54,
+          "valueLabel": "~54 GB",
+          "color": "referencia"
+        },
+        {
+          "label": "Bonsai 2 27B · MLX",
+          "note": "texto + visão · dado da PrismML",
+          "value": 8.6,
+          "color": "fabricante"
+        },
+        {
+          "label": "Bonsai 2 27B · GGUF PTQ1_0",
+          "note": "só texto · dado da PrismML",
+          "value": 5.95,
+          "color": "fabricante"
+        },
+        {
+          "label": "Ternary Bonsai 27B (v1) · MLX",
+          "note": "arquivo no Mac de teste",
+          "value": 8.49,
+          "color": "bonsai"
+        },
+        {
+          "label": "Qwen 3.5 9B · MLX 4-bit",
+          "note": "arquivos no Mac de teste",
+          "value": 5.95,
+          "color": "qwen"
+        }
+      ],
+      "legend": [
+        { "label": "medido no Mac de teste", "color": "#34d399" },
+        { "label": "publicado pela PrismML", "color": "#a78bfa" }
+      ],
+      "foot": "GB decimais. Durante a geração, o processo ocupou ~7,2–7,8 GB com o Qwen 3.5 9B e ~9,6–10,2 GB com o Bonsai 27B (v1)."
+    },
+    {
+      "arquivo": "grafico-velocidade.png",
+      "kicker": "Medido · Mac mini M4 · 16 GB",
+      "title": "Velocidade de geração",
+      "sub": "Média de seis rodadas por modelo (três tarefas, com e sem raciocínio), LM Studio com MLX.",
+      "max": 22,
+      "unit": "tok/s",
+      "decimals": 1,
+      "rows": [
+        {
+          "label": "Qwen 3.5 9B",
+          "note": "teto teórico ≈ 20 tok/s",
+          "value": 18.9,
+          "color": "qwen"
+        },
+        {
+          "label": "Ternary Bonsai 27B (v1)",
+          "note": "teto teórico ≈ 14 tok/s",
+          "value": 10.8,
+          "color": "bonsai"
+        }
+      ],
+      "foot": "Teto teórico = largura de banda do M4 (120 GB/s) ÷ tamanho dos pesos. Faixas medidas: Qwen 18,2–19,8 tok/s; Bonsai 10,0–12,1 tok/s."
+    },
+    {
+      "arquivo": "grafico-raciocinio.png",
+      "kicker": "Medido · Mac mini M4 · 16 GB",
+      "title": "Tempo até a resposta completa",
+      "sub": "Pedido: “explique quantização em 3 parágrafos curtos”. Mesmo modelo, com e sem o modo “pensando”.",
+      "max": 132,
+      "unit": "s",
+      "decimals": 1,
+      "rows": [
+        {
+          "label": "Qwen 3.5 9B",
+          "note": "com raciocínio · 1.531 tokens pensando",
+          "value": 95.8,
+          "color": "lento"
+        },
+        { "label": "Qwen 3.5 9B", "note": "sem raciocínio", "value": 15.9, "color": "qwen" },
+        {
+          "label": "Ternary Bonsai 27B (v1)",
+          "note": "com raciocínio · 866 tokens pensando",
+          "value": 116.2,
+          "color": "lento"
+        },
+        {
+          "label": "Ternary Bonsai 27B (v1)",
+          "note": "sem raciocínio",
+          "value": 29.9,
+          "color": "bonsai"
+        }
+      ],
+      "foot": "Nas tarefas de código, os dois modelos passaram de 2.500 tokens raciocinando sem chegar à resposta; sem raciocínio, entregaram código correto em 19,4 s (Qwen) e 15,6 s (Bonsai)."
+    }
+  ]
+}
