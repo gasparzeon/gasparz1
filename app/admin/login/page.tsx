@@ -15,6 +15,9 @@ export const metadata: Metadata = {
   title: 'Entrar',
 };
 
+// Usa searchParams e consulta o banco (hasOwner): nunca pré-renderizar.
+export const dynamic = 'force-dynamic';
+
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 // O código vem da query string: Map evita colisão com chaves do prototype.
